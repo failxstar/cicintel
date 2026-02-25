@@ -1,0 +1,3 @@
+# 
+
+{"status":"ok","message":"CivicIntel Backend API","version":"1.0.0","timestamp":"2026-02-07T00:04:43.672Z"}

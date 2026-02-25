@@ -8,7 +8,8 @@ import { motion } from 'motion/react';
 import { Report, User } from '../App';
 import { translations } from './translations';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { getDistrictCenter, generateRandomCoordinates } from '../utils/mapConfig';
+import { getDistrictCenter } from '../utils/mapConfig';
+import { calculateDistance, formatDistance } from '../utils/distance';
 
 // Fix for default markers in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -34,6 +35,7 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const userMarkerRef = useRef<L.CircleMarker | null>(null);
 
   const t = translations[user.language];
 
@@ -88,23 +90,35 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
     }
   };
 
-  // Generate stable coordinates for reports (only when reports change, not on filter)
+
+  // Use REAL coordinates from reports (not random generation)
   useEffect(() => {
-    const districtCenter = getDistrictCenter(user.district);
+    console.log('[LeafletMapScreen] Received reports:', reports.length);
+    console.log('[LeafletMapScreen] Report details:', reports.map(r => ({
+      id: r.id,
+      title: r.title,
+      coordinates: r.coordinates,
+      district: r.district
+    })));
+
     const newCoordinates = new Map<string, [number, number]>();
-    
-    // Generate coordinates for all reports in the district
+
+    // Use actual coordinates from each report
     const districtReports = reports.filter(report => report.district === user.district);
-    const coordinates = generateRandomCoordinates(districtCenter, districtReports.length, 5);
-    
-    districtReports.forEach((report, index) => {
-      if (!reportCoordinates.has(report.id)) {
-        newCoordinates.set(report.id, coordinates[index] || districtCenter);
+
+    districtReports.forEach((report) => {
+      // CRITICAL: Use REAL coordinates from report, not random generation
+      if (report.coordinates && typeof report.coordinates.lat === 'number' && typeof report.coordinates.lng === 'number') {
+        console.log(`[LeafletMapScreen] Using real coordinates for "${report.title}":`, report.coordinates);
+        // Leaflet uses [lng, lat] format, but internally we'll store consistently
+        // The marker creation uses [lat, lng] so we store [lng, lat]
+        newCoordinates.set(report.id, [report.coordinates.lng, report.coordinates.lat]);
       } else {
-        newCoordinates.set(report.id, reportCoordinates.get(report.id)!);
+        console.error(`[LeafletMapScreen] Invalid coordinates for report ${report.id}:`, report.coordinates);
       }
     });
-    
+
+    console.log('[LeafletMapScreen] Total markers to render:', newCoordinates.size);
     setReportCoordinates(newCoordinates);
   }, [reports, user.district]);
 
@@ -112,9 +126,23 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Get district center coordinates
-    const districtCenter = getDistrictCenter(user.district);
-    
+    // GPS-FIRST APPROACH: NO HARDCODED FALLBACKS!
+    // PRIORITY 1: Use real GPS coordinates
+    // PRIORITY 2: World view if GPS not available (NO SILIGURI!)
+    const hasValidGPS = user.coordinates.lat !== 0 && user.coordinates.lng !== 0;
+    const mapCenter: [number, number] = hasValidGPS
+      ? [user.coordinates.lat, user.coordinates.lng]  // GPS coordinates (PRIMARY)
+      : [0, 0];                                        // World view (NO HARDCODED FALLBACK!)
+
+    const mapZoom = hasValidGPS ? 14 : 2;
+
+    console.log('[LeafletMapScreen] Initializing map at:', {
+      source: hasValidGPS ? 'GPS' : 'World View (GPS not available)',
+      center: mapCenter,
+      zoom: mapZoom,
+      userCoords: user.coordinates,
+    });
+
     // Initialize map with proper options
     leafletMapRef.current = L.map(mapRef.current, {
       zoomControl: true,
@@ -125,7 +153,7 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
       keyboard: true,
       dragging: true,
       touchZoom: true
-    }).setView([districtCenter[1], districtCenter[0]], 12);
+    }).setView([mapCenter[0], mapCenter[1]], mapCenter[0] === 0 ? 2 : 14);  // World view if no GPS/district, otherwise zoomed in
 
     // Ensure zoom control is positioned correctly
     leafletMapRef.current.zoomControl.setPosition('topright');
@@ -135,6 +163,38 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
       attribution: '© OpenStreetMap contributors | Fallback Map'
     }).addTo(leafletMapRef.current);
 
+    // Add "You Are Here" blue pulsing marker
+    if (user.coordinates && user.coordinates.lat && user.coordinates.lng) {
+      userMarkerRef.current = L.circleMarker([user.coordinates.lat, user.coordinates.lng], {
+        radius: 10,
+        fillColor: '#3b82f6',
+        color: '#fff',
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.8,
+      }).addTo(leafletMapRef.current);
+
+      userMarkerRef.current.bindPopup(`
+        <div style="text-align: center; min-width: 120px;">
+          <p style="font-weight: bold; margin: 0; color: #1f2937;">📍 You are here</p>
+          <p style="font-size: 10px; color: #6b7280; margin: 4px 0 0 0;">
+            ${user.coordinates.lat.toFixed(6)}, ${user.coordinates.lng.toFixed(6)}
+          </p>
+        </div>
+      `);
+
+      // Add pulsing circle animation
+      L.circle([user.coordinates.lat, user.coordinates.lng], {
+        radius: 100,
+        fillColor: '#3b82f6',
+        color: '#3b82f6',
+        weight: 1,
+        opacity: 0.4,
+        fillOpacity: 0.1,
+        className: 'user-location-pulse',
+      }).addTo(leafletMapRef.current);
+    }
+
     // Cleanup function
     return () => {
       if (leafletMapRef.current) {
@@ -142,7 +202,7 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
         leafletMapRef.current = null;
       }
     };
-  }, [user.district]);
+  }, [user.district, user.coordinates]);
 
   // Update markers when reports change
   useEffect(() => {
@@ -156,9 +216,8 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
 
     // Add new markers for filtered reports
     filteredReports.forEach((report) => {
-      const coordinates = reportCoordinates.get(report.id);
-      if (!coordinates) return;
-      
+      // REMOVED: const coordinates check - now using report.coordinates directly
+
       // Create custom icon based on status
       const customIcon = L.divIcon({
         className: 'custom-leaflet-marker',
@@ -200,16 +259,38 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
         iconAnchor: [16, 32]
       });
 
-      const marker = L.marker([coordinates[1], coordinates[0]], { icon: customIcon })
-        .addTo(leafletMapRef.current!);
+      // CRITICAL: Report coordinates are {lat, lng} objects
+      // Leaflet expects [lat, lng] arrays
+      const marker = L.marker(
+        [report.coordinates.lat, report.coordinates.lng], // FIXED: Correct order [lat, lng]
+        { icon: customIcon }
+      ).addTo(leafletMapRef.current!);
 
-      // Add popup
+      // Calculate distance from user to report
+      const distance = user.coordinates
+        ? calculateDistance(
+          user.coordinates.lat,
+          user.coordinates.lng,
+          report.coordinates.lat,  // FIXED: Use report.coordinates directly
+          report.coordinates.lng
+        )
+        : null;
+
+      // Add popup with distance
       const popupContent = `
         <div style="min-width: 250px; max-width: 300px;">
           <div style="display: flex; align-items: center; justify-between; margin-bottom: 8px;">
             <h3 style="margin: 0; font-size: 16px; font-weight: bold; color: #1f2937;">${report.title}</h3>
             <span style="font-size: 12px; color: #6b7280;">${formatTimeAgo(report.timestamp)}</span>
           </div>
+          
+          ${distance !== null ? `
+            <div style="background: #eff6ff; border: 1px solid #3b82f6; border-radius: 6px; padding: 6px 8px; margin-bottom: 8px;">
+              <p style="margin: 0; font-size: 12px; color: #1e40af; font-weight: 600;">
+                📏 ${formatDistance(distance)} away
+              </p>
+            </div>
+          ` : ''}
           
           <p style="margin: 8px 0; font-size: 13px; color: #4b5563;">${report.ward} • ${report.street}</p>
           <p style="margin: 8px 0; font-size: 14px; color: #1f2937; line-height: 1.4;">${report.description}</p>
@@ -262,7 +343,7 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
         maxWidth: 300,
         className: 'custom-popup'
       });
-      
+
       // Add click handler for both marker and popup
       marker.on('click', (e) => {
         e.originalEvent?.stopPropagation();
@@ -305,7 +386,7 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
               🍃 OpenStreetMap
             </Badge>
           </div>
-          
+
           {/* Filter Chips */}
           <div className="flex gap-2 overflow-x-auto pb-2">
             {filterOptions.map((option) => (
@@ -326,8 +407,8 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
 
       {/* Map Container - takes remaining space above bottom nav */}
       <div className="relative flex-1 z-10">
-        <div 
-          ref={mapRef} 
+        <div
+          ref={mapRef}
           className="w-full h-full relative z-10"
           style={{ minHeight: '400px' }}
         />
@@ -338,9 +419,58 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
         </div>
       </div>
 
+      {/* Search and filter bar */}
+      <motion.div
+        className="absolute top-4 left-4 right-4 z-[1000]"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <div className="relative flex gap-2">
+          <input
+            type="text"
+            placeholder="Search reports..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 px-4 py-3 rounded-xl bg-white shadow-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="px-4 py-3 rounded-xl bg-white shadow-lg border border-gray-200 hover:bg-gray-50"
+          >
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Live Location Button (GPS) */}
+      <motion.button
+        className="absolute bottom-24 right-4 z-[1000] bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 active:scale-95 transition-all"
+        onClick={() => {
+          if (user.coordinates && user.coordinates.lat !== 0 && user.coordinates.lng !== 0 && leafletMapRef.current) {
+            console.log('[LeafletMapScreen] Flying to user GPS location:', user.coordinates);
+            leafletMapRef.current.flyTo([user.coordinates.lat, user.coordinates.lng], 16, {
+              duration: 1.5
+            });
+          } else {
+            toast.error('GPS location not available', {
+              description: 'Please enable location access'
+            });
+          }
+        }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        title="My Location (GPS)"
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        <Navigation className="w-6 h-6" />
+      </motion.button>
+
       {/* Custom Bottom Popup for Selected Pin (without backdrop) */}
       {selectedPin && (
-        <motion.div 
+        <motion.div
           className="fixed bottom-0 left-0 right-0 max-w-sm mx-auto bg-white border-t border-gray-200 rounded-t-lg shadow-lg z-[10000]"
           initial={{ y: "100%" }}
           animate={{ y: 0 }}
@@ -358,13 +488,13 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
                 <X className="w-4 h-4" />
               </button>
             </div>
-            
+
             <div className="p-4 space-y-4">
               <div className="aspect-video relative rounded-lg overflow-hidden">
                 <ImageWithFallback
                   src={selectedPin.imageUrl}
                   alt={selectedPin.title}
-                  className="w-full h-full object-cover"
+                  className="relative w-full h-[420px] overflow-hidden rounded-xl"
                 />
                 {selectedPin.isTamperDetected && (
                   <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded">
@@ -375,11 +505,10 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <Badge className={`text-xs ${
-                    selectedPin.status === 'pending' ? 'bg-red-100 text-red-800' :
+                  <Badge className={`text-xs ${selectedPin.status === 'pending' ? 'bg-red-100 text-red-800' :
                     selectedPin.status === 'submitted' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
+                      'bg-green-100 text-green-800'
+                    }`}>
                     {getStatusText(selectedPin.status)}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
@@ -407,20 +536,19 @@ export function LeafletMapScreen({ reports, user, onReportSelect, onUpvote }: Le
                   <Eye className="w-4 h-4 mr-2" />
                   {t.viewDetails}
                 </Button>
-                
+
                 <motion.button
-                  className={`flex items-center gap-2 px-4 py-2 rounded text-sm ${
-                    selectedPin.hasUserUpvoted
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-secondary-foreground'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded text-sm ${selectedPin.hasUserUpvoted
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-secondary-foreground'
+                    }`}
                   onClick={() => onUpvote(selectedPin.id)}
                   whileTap={{ scale: 1.05 }}
                 >
                   <ArrowUp className="w-4 h-4" />
                   {selectedPin.upvotes}
                 </motion.button>
-                
+
                 <Button variant="outline">
                   {t.reportAgain}
                 </Button>

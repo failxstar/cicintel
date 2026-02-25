@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, MapPin, Clock, Mic, X, Brain, AlertTriangle } from 'lucide-react';
+import { Camera, MapPin, AlertCircle, ArrowLeft, Sparkles, Loader, X, Clock, Brain, AlertTriangle, Navigation, Target, Mic } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
@@ -12,6 +12,9 @@ import { translations } from './translations';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { analyzeImage, AIAnalysisResult } from '../utils/aiClassification';
 import { VoiceRecorder } from './VoiceRecorder';
+import { LiveLocationMap, TaggedLocation } from './LiveLocationMap';
+import { LocationPickerMap } from './LocationPickerMap';
+import { formatCoordinates } from '../utils/locationUtils';
 
 interface ReportScreenProps {
   user: User;
@@ -34,10 +37,30 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
   const [severity, setSeverity] = useState<number[]>([5]);
   const [description, setDescription] = useState<string>('');
   const [hasVoiceNote, setHasVoiceNote] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioDuration, setAudioDuration] = useState<number>(0);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<TaggedLocation | null>(null);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [selectedMapLocation, setSelectedMapLocation] = useState<{
+    lat: number;
+    lng: number;
+    address?: string;
+  } | null>(null);
 
   const t = translations[user.language];
+
+  // Initialize selectedMapLocation with user's current GPS coordinates
+  useEffect(() => {
+    if (user.coordinates && !selectedMapLocation) {
+      setSelectedMapLocation({
+        lat: user.coordinates.lat,
+        lng: user.coordinates.lng,
+        address: user.location?.street || undefined
+      });
+    }
+  }, [user.coordinates, user.location?.street]); // Only run when user coordinates change
 
   // Trigger AI analysis when photo and description are available
   useEffect(() => {
@@ -46,8 +69,8 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
       // Simulate AI processing delay
       setTimeout(() => {
         const analysis = analyzeImage(capturedPhoto, description, {
-          district: user.district,
-          ward: `Ward ${Math.floor(Math.random() * 20) + 1}`,
+          district: user.district || '',
+          ward: user.district || '',
           coordinates: user.coordinates
         });
         setAiAnalysis(analysis);
@@ -58,41 +81,55 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
     }
   }, [capturedPhoto, description, user]);
 
-  // Simulate camera capture
+
+  // Handle real photo upload from camera or files
   const handleCameraCapture = () => {
-    // Simulate photo capture with a random Unsplash image
-    const photoUrls = [
-      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400',
-      'https://images.unsplash.com/photo-1609771405106-23d93a049d8b?w=400',
-      'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400',
-      'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400',
-      'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400'
-    ];
-    const randomPhoto = photoUrls[Math.floor(Math.random() * photoUrls.length)];
-    setCapturedPhoto(randomPhoto);
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment'; // Request camera if available
+
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setCapturedPhoto(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    input.click();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // CRITICAL: Block submission if no location selected
+    if (!selectedMapLocation) {
+      alert('⚠️ Please select a location on the map before submitting.');
+      return;
+    }
+
     if (!capturedPhoto || !issueType) {
       return;
     }
 
     const selectedIssueType = issueTypes.find(type => type.value === issueType);
-    
+
     const newReport: Omit<Report, 'id' | 'timestamp' | 'upvotes' | 'comments' | 'distance' | 'hasUserUpvoted'> = {
-      title: aiAnalysis?.primaryIssue 
-        ? `${aiAnalysis.primaryIssue} issue detected` 
+      title: aiAnalysis?.primaryIssue
+        ? `${aiAnalysis.primaryIssue} issue detected`
         : `${selectedIssueType?.aiTag} reported`,
-      description: description || `${selectedIssueType?.aiTag} issue reported via Swachh Nagar`,
+      description: description || `${selectedIssueType?.aiTag} issue reported via CivicIntel`,
       imageUrl: capturedPhoto,
-      district: user.district,
-      ward: `Ward ${Math.floor(Math.random() * 20) + 1}`,
-      street: 'Current Location Street',
+      district: user.district || '',
+      ward: user.district || '',
+      street: selectedMapLocation.address || user.location?.street || user.district || 'Unknown Street',
       coordinates: {
-        lat: user.coordinates.lat + (Math.random() - 0.5) * 0.01,
-        lng: user.coordinates.lng + (Math.random() - 0.5) * 0.01
+        lat: selectedMapLocation.lat,
+        lng: selectedMapLocation.lng
       },
       aiTag: aiAnalysis?.primaryIssue || selectedIssueType?.aiTag || 'Unknown',
       aiConfidence: aiAnalysis?.confidence || Math.floor(Math.random() * 15) + 85,
@@ -100,8 +137,20 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
       severity: aiAnalysis?.severity || severity[0],
       type: issueType,
       userId: 'current-user',
-      priority: (aiAnalysis?.priority === 'critical' ? 'high' : aiAnalysis?.priority) || (severity[0] >= 7 ? 'high' : severity[0] >= 4 ? 'medium' : 'low')
+      priority: (aiAnalysis?.priority === 'critical' ? 'high' : aiAnalysis?.priority) || (severity[0] >= 7 ? 'high' : severity[0] >= 4 ? 'medium' : 'low'),
+      voiceNoteUrl: audioBlob ? await blobToBase64(audioBlob) : undefined,
+      voiceNoteDuration: audioDuration || undefined
     };
+
+    // Helper function to convert blob to base64
+    async function blobToBase64(blob: Blob): Promise<string> {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
 
     onSubmit(newReport);
   };
@@ -136,20 +185,23 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
           <label className="block text-sm mb-2">{t.capturePhoto} *</label>
           <div className="relative">
             {!capturedPhoto ? (
-              <motion.div
-                className="aspect-video bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
-                onClick={handleCameraCapture}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Camera className="w-12 h-12 text-gray-400 mb-2" />
-                <p className="text-sm text-gray-500">{t.capturePhoto}</p>
-              </motion.div>
+              <div className="space-y-3">
+                <motion.div
+                  className="aspect-video bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
+                  onClick={handleCameraCapture}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Camera className="w-12 h-12 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">{t.capturePhoto}</p>
+                  <p className="text-xs text-gray-400 mt-1">Camera or Gallery</p>
+                </motion.div>
+              </div>
             ) : (
-              <div className="relative aspect-video">
+              <div className="relative w-full h-[300px] overflow-hidden rounded-lg">
                 <ImageWithFallback
                   src={capturedPhoto}
                   alt="Captured photo"
-                  className="w-full h-full object-cover rounded-lg"
+                  className="w-full h-full"
                 />
                 <Button
                   type="button"
@@ -159,6 +211,16 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
                   onClick={() => setCapturedPhoto('')}
                 >
                   <X className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="absolute bottom-2 right-2"
+                  onClick={handleCameraCapture}
+                >
+                  <Camera className="w-4 h-4 mr-1" />
+                  Change Photo
                 </Button>
               </div>
             )}
@@ -175,7 +237,7 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
                 <div className="animate-pulse text-sm text-blue-600">Processing...</div>
               )}
             </div>
-            
+
             {isAnalyzing ? (
               <div className="space-y-2">
                 <div className="animate-pulse bg-blue-200 h-4 rounded w-3/4"></div>
@@ -185,13 +247,12 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
             ) : aiAnalysis && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Badge 
-                    className={`text-xs ${
-                      aiAnalysis.priority === 'critical' ? 'bg-red-100 text-red-800' :
+                  <Badge
+                    className={`text-xs ${aiAnalysis.priority === 'critical' ? 'bg-red-100 text-red-800' :
                       aiAnalysis.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                      aiAnalysis.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}
+                        aiAnalysis.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                      }`}
                   >
                     {aiAnalysis.priority.toUpperCase()} PRIORITY
                   </Badge>
@@ -199,13 +260,13 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
                     {aiAnalysis.confidence}% confidence
                   </span>
                 </div>
-                
+
                 <div className="text-sm space-y-1">
                   <p><strong>Detected:</strong> {aiAnalysis.primaryIssue}</p>
                   <p><strong>Department:</strong> {aiAnalysis.suggestedDepartment}</p>
                   <p><strong>Est. Resolution:</strong> {aiAnalysis.estimatedResolutionTime}</p>
                 </div>
-                
+
                 {aiAnalysis.riskFactors.length > 0 && (
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
@@ -219,7 +280,7 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
                     </div>
                   </div>
                 )}
-                
+
                 {aiAnalysis.keywords.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {aiAnalysis.keywords.map((keyword, index) => (
@@ -234,18 +295,74 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
           </div>
         )}
 
-        {/* Auto-filled Location & Time */}
-        <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className="w-4 h-4 text-gray-500" />
-            <span className="text-gray-700">{t.location}:</span>
-            <span>{user.district}, {user.coordinates.lat.toFixed(4)}, {user.coordinates.lng.toFixed(4)}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="w-4 h-4 text-gray-500" />
-            <span className="text-gray-700">Time:</span>
-            <span>{date} {time}</span>
-          </div>
+        {/* Location Selection */}
+        <div>
+          <label className="block text-sm mb-2 font-medium">📍 {t.location} *</label>
+
+          {!showLocationPicker ? (
+            <div className="space-y-3">
+              {/* Current selected location info */}
+              <div className={`rounded-lg p-4 space-y-2 ${selectedMapLocation ? 'bg-green-50 border border-green-200' : 'bg-gray-50'}`}>
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className={`w-4 h-4 ${selectedMapLocation ? 'text-green-600' : 'text-gray-500'}`} />
+                  <span className="text-gray-700">{t.location}:</span>
+                  <span className="font-mono text-xs">
+                    {selectedMapLocation
+                      ? `${selectedMapLocation.lat.toFixed(6)}, ${selectedMapLocation.lng.toFixed(6)}`
+                      : 'Not selected'
+                    }
+                  </span>
+                </div>
+                {selectedMapLocation && selectedMapLocation.address && (
+                  <div className="flex items-center gap-1 pt-2 border-t border-green-200">
+                    <Target className="w-3 h-3 text-green-600" />
+                    <span className="text-xs text-green-600 font-medium">
+                      📌 {selectedMapLocation.address}
+                    </span>
+                  </div>
+                )}
+                {!selectedMapLocation && (
+                  <div className="text-xs text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Required: Click button below to select location on map
+                  </div>
+                )}
+              </div>
+
+              {/* Location action buttons */}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={selectedMapLocation ? "outline" : "default"}
+                  className="flex-1"
+                  onClick={() => setShowLocationPicker(true)}
+                >
+                  <Navigation className="w-4 h-4 mr-2" />
+                  {selectedMapLocation ? 'Change Location' : 'Select Location on Map'}
+                </Button>
+                {selectedMapLocation && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedMapLocation(null)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <LocationPickerMap
+              userLocation={user.coordinates}
+              onLocationSelect={(location) => {
+                setSelectedMapLocation(location);
+                setShowLocationPicker(false);
+              }}
+              onCancel={() => setShowLocationPicker(false)}
+            />
+          )}
         </div>
 
         {/* Issue Type */}
@@ -305,8 +422,12 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
           <label className="block text-sm mb-2">
             {t.recordVoiceNote} ({t.optional})
           </label>
-          <VoiceRecorder 
-            onRecordingComplete={setHasVoiceNote}
+          <VoiceRecorder
+            onRecordingComplete={(hasRecording, blob, duration) => {
+              setHasVoiceNote(hasRecording);
+              setAudioBlob(blob || null);
+              setAudioDuration(duration || 0);
+            }}
             language={user.language}
           />
         </div>
@@ -323,3 +444,4 @@ export function ReportScreen({ user, onSubmit, onCancel }: ReportScreenProps) {
     </div>
   );
 }
+

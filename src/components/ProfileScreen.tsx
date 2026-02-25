@@ -25,16 +25,15 @@ const languageOptions = [
   { value: 'english', label: 'English' },
   { value: 'hindi', label: 'हिन्दी (Hindi)' },
   { value: 'bengali', label: 'বাংলা (Bengali)' },
-  { value: 'santhali', label: 'ᱥᱟᱱᱛᱟᱲᱤ (Santhali)' },
   { value: 'nagpuri', label: 'नागपुरी (Nagpuri)' }
 ];
 
-export function ProfileScreen({ 
-  reports, 
-  user, 
-  onLanguageChange, 
+export function ProfileScreen({
+  reports,
+  user,
+  onLanguageChange,
   onToggleOnline,
-  onReportAgain 
+  onReportAgain
 }: ProfileScreenProps) {
   const t = translations[user.language];
 
@@ -89,7 +88,7 @@ export function ProfileScreen({
       
       Thank you for your civic participation.
     `;
-    
+
     const blob = new Blob([certificateData], { type: 'text/plain' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -113,9 +112,9 @@ export function ProfileScreen({
       title: 'Broken streetlight near bus stop',
       description: 'Streetlight has been non-functional for 3 days',
       imageUrl: 'https://i.pinimg.com/736x/c5/30/95/c530952c19fc1c1258fe15a9714562db.jpg?w=400',
-      district: user.district,
-      ward: 'Ward 5',
-      street: 'Main Road',
+      district: user.district || 'Anna Nagar',
+      ward: 'Anna Nagar',
+      street: 'Anna Nagar',
       coordinates: user.coordinates,
       distance: 0.1,
       timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
@@ -134,9 +133,9 @@ export function ProfileScreen({
       title: 'Garbage overflow in residential area',
       description: 'Multiple garbage bins overflowing for past week',
       imageUrl: 'https://i.pinimg.com/736x/5c/7c/6b/5c7c6b139ab69341800be13b9ba038cb.jpg?w=400',
-      district: user.district,
-      ward: 'Ward 8',
-      street: 'Colony Road',
+      district: user.district || 'T. Nagar',
+      ward: 'T. Nagar',
+      street: 'T. Nagar',
       coordinates: user.coordinates,
       distance: 0.5,
       timestamp: new Date(Date.now() - 72 * 60 * 60 * 1000),
@@ -155,9 +154,9 @@ export function ProfileScreen({
       title: 'Pothole on main road',
       description: 'Large pothole causing traffic issues',
       imageUrl: 'https://i.pinimg.com/736x/d0/3f/c2/d03fc2fe363172d449e218a84b557508.jpg?w=400',
-      district: user.district,
-      ward: 'Ward 12',
-      street: 'Highway Road',
+      district: user.district || 'Velachery',
+      ward: 'Velachery',
+      street: 'Velachery',
       coordinates: user.coordinates,
       distance: 0.8,
       timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000),
@@ -176,9 +175,9 @@ export function ProfileScreen({
       title: 'Water supply disruption',
       description: 'No water supply for 2 days in the area',
       imageUrl: 'https://i.pinimg.com/736x/5d/d9/86/5dd9865dc83354c74323a381faf3d3e3.jpg?w=400',
-      district: user.district,
-      ward: 'Ward 15',
-      street: 'Residential Complex',
+      district: user.district || 'Mylapore',
+      ward: 'Mylapore',
+      street: 'Mylapore',
       coordinates: user.coordinates,
       distance: 1.2,
       timestamp: new Date(Date.now() - 96 * 60 * 60 * 1000),
@@ -215,7 +214,7 @@ export function ProfileScreen({
               <p className="text-sm text-muted-foreground">📍 {user.district}</p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-lg font-medium">{userReports.length}</p>
@@ -239,7 +238,7 @@ export function ProfileScreen({
             <TabsTrigger value="reports">My Reports</TabsTrigger>
             <TabsTrigger value="tech">Tech Features</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="settings" className="space-y-4 mt-4">
             {/* Settings */}
             <div className="bg-white rounded-lg border p-4">
@@ -247,7 +246,7 @@ export function ProfileScreen({
                 <Settings className="w-4 h-4" />
                 {t.settings}
               </h3>
-              
+
               <div className="space-y-4">
                 {/* Language Selection */}
                 <div className="flex items-center justify-between">
@@ -283,8 +282,8 @@ export function ProfileScreen({
                       {user.isOnline ? t.onlineMode : t.offlineMode} (Select Automatically)
                     </span>
                   </div>
-                  <Switch 
-                    checked={user.isOnline} 
+                  <Switch
+                    checked={user.isOnline}
                     onCheckedChange={onToggleOnline}
                   />
                 </div>
@@ -296,7 +295,7 @@ export function ProfileScreen({
             {/* My Reports */}
             <div className="bg-white rounded-lg border p-4">
               <h3 className="font-medium mb-4">{t.myReports}</h3>
-              
+
               <div className="space-y-3">
                 {userReports.map((report) => (
                   <motion.div
@@ -310,10 +309,10 @@ export function ProfileScreen({
                         <ImageWithFallback
                           src={report.imageUrl}
                           alt={report.title}
-                          className="w-full h-full object-cover"
+                          className="relative w-full h-[420px] overflow-hidden rounded-xl"
                         />
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between mb-1">
                           <h4 className="text-sm font-medium truncate">{report.title}</h4>
@@ -321,18 +320,18 @@ export function ProfileScreen({
                             {getStatusText(report.status)}
                           </Badge>
                         </div>
-                        
+
                         <p className="text-xs text-muted-foreground mb-2">
                           {report.ward} • {formatTimeAgo(report.timestamp)}
                         </p>
-                        
+
                         {report.status === 'submitted' && (
                           <div className="flex items-center gap-1 text-xs text-orange-600 mb-2">
                             <Clock className="w-3 h-3" />
                             {t.slaCountdown}
                           </div>
                         )}
-                        
+
                         <div className="flex items-center gap-2 flex-wrap">
                           {report.status === 'resolved' && (
                             <>
@@ -346,7 +345,7 @@ export function ProfileScreen({
                                 <Download className="w-3 h-3" />
                                 Download Certificate
                               </Button>
-                              
+
                               {/* Report Again Button */}
                               <Button
                                 variant="outline"
@@ -357,7 +356,7 @@ export function ProfileScreen({
                                 <RotateCcw className="w-3 h-3" />
                                 Report Again
                               </Button>
-                              
+
                               {/* Rating Section */}
                               <div className="flex items-center gap-1 ml-auto">
                                 <span className="text-xs text-muted-foreground">Rate:</span>
@@ -372,14 +371,14 @@ export function ProfileScreen({
                               </div>
                             </>
                           )}
-                          
+
                           {report.status === 'acknowledged' && (
                             <div className="flex items-center gap-2 text-xs text-blue-600">
                               <Clock className="w-3 h-3" />
                               <span>Issue acknowledged by government</span>
                             </div>
                           )}
-                          
+
                           {report.status === 'pending' && (
                             <Button
                               variant="outline"
@@ -396,7 +395,7 @@ export function ProfileScreen({
                   </motion.div>
                 ))}
               </div>
-              
+
               {userReports.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   <p className="text-sm">No reports yet</p>

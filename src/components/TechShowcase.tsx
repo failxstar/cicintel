@@ -85,12 +85,6 @@ export function TechShowcase({ language }: TechShowcaseProps) {
           </motion.div>
         ))}
       </div>
-
-      <div className="text-center pt-4">
-        <Badge variant="outline" className="bg-gradient-to-r from-blue-50 to-purple-50">
-          Powered by team The Black Pearl
-        </Badge>
-      </div>
     </div>
   );
 }

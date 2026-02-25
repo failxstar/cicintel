@@ -69,7 +69,7 @@ export function AnalyticsScreen({ reports, user }: AnalyticsScreenProps) {
       <div className="bg-white border-b sticky top-0 z-40">
         <div className="p-4">
           <h1 className="text-xl mb-1 text-primary">Analytics Dashboard</h1>
-          <p className="text-sm text-muted-foreground">{user.district} District</p>
+          <p className="text-sm text-muted-foreground">{user.district}</p>
         </div>
       </div>
 
@@ -135,10 +135,9 @@ export function AnalyticsScreen({ reports, user }: AnalyticsScreenProps) {
             {insights.criticalAreas.map((area, index) => (
               <div key={area.ward} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full ${
-                    index === 0 ? 'bg-red-500' : 
-                    index === 1 ? 'bg-orange-500' : 'bg-yellow-500'
-                  }`} />
+                  <div className={`w-3 h-3 rounded-full ${index === 0 ? 'bg-red-500' :
+                      index === 1 ? 'bg-orange-500' : 'bg-yellow-500'
+                    }`} />
                   <div>
                     <p className="text-sm font-medium">{area.ward}</p>
                     <p className="text-xs text-muted-foreground">Needs attention</p>
@@ -161,19 +160,17 @@ export function AnalyticsScreen({ reports, user }: AnalyticsScreenProps) {
           <div className="space-y-3">
             {recentActivity.map((activity) => (
               <div key={activity.id} className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0">
-                <div className={`w-2 h-2 rounded-full mt-2 ${
-                  activity.status === 'resolved' ? 'bg-green-500' :
-                  activity.status === 'submitted' ? 'bg-yellow-500' : 'bg-red-500'
-                }`} />
+                <div className={`w-2 h-2 rounded-full mt-2 ${activity.status === 'resolved' ? 'bg-green-500' :
+                    activity.status === 'submitted' ? 'bg-yellow-500' : 'bg-red-500'
+                  }`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{activity.title}</p>
                   <p className="text-xs text-muted-foreground">{activity.ward}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge className={`text-xs ${
-                      activity.priority === 'high' ? 'bg-red-100 text-red-800' :
-                      activity.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
+                    <Badge className={`text-xs ${activity.priority === 'high' ? 'bg-red-100 text-red-800' :
+                        activity.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                      }`}>
                       {activity.priority}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
@@ -199,7 +196,7 @@ export function AnalyticsScreen({ reports, user }: AnalyticsScreenProps) {
                 <span className="text-sm font-medium">91%</span>
               </div>
             </div>
-            
+
             <div className="flex justify-between items-center">
               <span className="text-sm">Response Time (Target: 2 days)</span>
               <div className="flex items-center gap-2">
@@ -209,7 +206,7 @@ export function AnalyticsScreen({ reports, user }: AnalyticsScreenProps) {
                 <span className="text-sm font-medium">1.7d avg</span>
               </div>
             </div>
-            
+
             <div className="flex justify-between items-center">
               <span className="text-sm">Citizen Satisfaction</span>
               <div className="flex items-center gap-2">

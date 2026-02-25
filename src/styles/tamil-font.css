@@ -1,0 +1,11 @@
+/* Tamil Font Support - Applied when lang="ta" or lang="tamil" is set on body */
+body[lang="ta"],
+body[lang="tamil"] {
+    font-family: 'Noto Sans Tamil', 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+}
+
+/* Ensure Tamil text renders beautifully */
+body[lang="ta"] *,
+body[lang="tamil"] * {
+    font-family: inherit;
+}

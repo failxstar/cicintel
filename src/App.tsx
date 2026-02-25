@@ -6,13 +6,15 @@ import { PostLocationLoadingScreen } from './components/PostLocationLoadingScree
 import { OnboardingScreen } from './components/OnboardingScreen';
 import { HomeScreen } from './components/HomeScreen';
 import { ReportScreen } from './components/ReportScreen';
-import { LeafletMapScreen } from './components/LeafletMapScreen';
+import { SmartHeatmap } from './components/SmartHeatmap';
 import { ProfileScreen } from './components/ProfileScreen';
 import { AnalyticsScreen } from './components/AnalyticsScreen';
 import { BottomNavigation } from './components/BottomNavigation';
 import DesktopMobileNotice from './components/DesktopMobileNotice';
 import SIHBackground from './components/SIHBackground';
 import { translations, Language } from './components/translations';
+import { dataService } from './services/dataService';
+import { useGeolocation } from './hooks/useGeolocation';
 
 export interface Report {
   id: string;
@@ -37,6 +39,8 @@ export interface Report {
   hasUserUpvoted?: boolean;
   isTamperDetected?: boolean;
   priority?: 'high' | 'medium' | 'low';
+  voiceNoteUrl?: string;  // base64 data URL of the audio recording
+  voiceNoteDuration?: number;  // duration in seconds
 }
 
 export interface MediaItem {
@@ -54,8 +58,15 @@ export interface Comment {
 }
 
 export interface User {
-  district: string;
-  coordinates: { lat: number; lng: number };
+  coordinates: { lat: number; lng: number };  // PRIMARY: Real GPS coordinates
+  district?: string;                           // OPTIONAL: For backward compatibility
+  location?: {                                 // Auto-derived from GPS via reverse geocoding
+    city?: string;
+    state?: string;
+    country?: string;
+    formattedAddress?: string;
+    street?: string;                           // Current street/road name
+  };
   language: Language;
   isOnline: boolean;
 }
@@ -66,9 +77,9 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isPostLocationLoading, setIsPostLocationLoading] = useState(false);
   const [currentScreen, setCurrentScreen] = useState<Screen>('onboarding');
+  const [isAdminMode, setIsAdminMode] = useState(false);
   const [user, setUser] = useState<User>({
-    district: 'Siliguri',
-    coordinates: { lat: 26.7271, lng: 88.3953 }, // Siliguri coordinates
+    coordinates: { lat: 0, lng: 0 },  // Will be set by real GPS
     language: 'english',
     isOnline: true
   });
@@ -87,7 +98,101 @@ export default function App() {
     initializeApp();
   }, []);
 
-  // Initialize with realistic Siliguri Municipal Corporation reports
+  // Real-time GPS tracking
+  const { position: gpsPosition, loading: gpsLoading, error: gpsError } = useGeolocation({
+    watch: true,
+    enableHighAccuracy: true
+  });
+
+  // Update user coordinates when GPS position changes
+  useEffect(() => {
+    if (gpsPosition) {
+      console.log('[App] GPS position acquired:', {
+        lat: gpsPosition.latitude,
+        lng: gpsPosition.longitude,
+        accuracy: gpsPosition.accuracy
+      });
+
+      setUser(prev => ({
+        ...prev,
+        coordinates: {
+          lat: gpsPosition.latitude,
+          lng: gpsPosition.longitude
+        }
+      }));
+
+      // Auto-derive district and location from GPS (reverse geocoding)
+      import('./services/geocodingService').then(({ reverseGeocode }) => {
+        reverseGeocode(gpsPosition.latitude, gpsPosition.longitude)
+          .then(result => {
+            console.log('[App] Reverse geocoding result:', result);
+            console.log('[App] 📍 Street name:', result.street || 'No street data');
+            setUser(prev => ({
+              ...prev,
+              district: result.city || result.state || 'Unknown',  // Use city as district
+              location: {
+                city: result.city,
+                state: result.state,
+                country: result.country,
+                formattedAddress: result.formattedAddress,
+                street: result.street  // Store street name
+              }
+            }));
+          })
+          .catch(err => {
+            console.error('[App] Reverse geocoding failed:', err);
+            // Fallback: use coordinates as district identifier
+            setUser(prev => ({
+              ...prev,
+              district: `Location ${gpsPosition.latitude.toFixed(2)}, ${gpsPosition.longitude.toFixed(2)}`
+            }));
+          });
+      });
+    }
+  }, [gpsPosition]);
+
+  // Handle GPS errors
+  useEffect(() => {
+    if (gpsError) {
+      console.error('[App] GPS error:', gpsError.message);
+
+      if (gpsError.type === 'PERMISSION_DENIED') {
+        toast.error('Location permission denied', {
+          description: 'Please enable location access to use this app',
+          duration: 5000
+        });
+      }
+    }
+  }, [gpsError]);
+
+  // Load reports from dataService
+  useEffect(() => {
+    console.log('[App] Loading reports from dataService');
+    const loadedReports = dataService.getReports();
+    console.log('[App] Loaded reports:', loadedReports.map(r => ({
+      id: r.id,
+      title: r.title,
+      coordinates: r.coordinates,
+      district: r.district
+    })));
+    setReports(loadedReports);
+
+    // Subscribe to data changes
+    const unsubscribe = dataService.subscribe((updatedReports) => {
+      console.log('[App] Received updated reports:', updatedReports.length);
+      console.log('[App] Updated report coordinates:', updatedReports.map(r => ({
+        id: r.id,
+        coordinates: r.coordinates
+      })));
+      setReports(updatedReports);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // OLD: Initialize with realistic Siliguri Municipal Corporation reports
+  // This is now handled by dataService
+  /*
   useEffect(() => {
     const initialReports: Report[] = [
       {
@@ -279,7 +384,8 @@ export default function App() {
       }
     ];
     setReports(initialReports);
-  }, []);
+    }, []);
+    */
 
   const handleCompleteOnboarding = (selectedDistrict: string, coords: { lat: number; lng: number }, language: Language) => {
     setUser(prev => ({
@@ -288,10 +394,10 @@ export default function App() {
       coordinates: coords,
       language
     }));
-    
+
     // Show post-location loading screen
     setIsPostLocationLoading(true);
-    
+
     // Simulate setup time after location detection
     setTimeout(() => {
       setIsPostLocationLoading(false);
@@ -301,6 +407,12 @@ export default function App() {
   };
 
   const handleAddReport = (newReport: Omit<Report, 'id' | 'timestamp' | 'upvotes' | 'comments' | 'distance' | 'hasUserUpvoted'>) => {
+    console.log('[App] handleAddReport called with data:', {
+      title: newReport.title,
+      coordinates: newReport.coordinates,
+      district: newReport.district
+    });
+
     const report: Report = {
       ...newReport,
       id: Date.now().toString(),
@@ -308,11 +420,26 @@ export default function App() {
       upvotes: 0,
       comments: [],
       distance: Math.random() * 3, // Simulate distance
-      hasUserUpvoted: false
+      hasUserUpvoted: false,
+      media: newReport.imageUrl ? [{
+        id: `${Date.now()}-1`,
+        type: 'image' as const,
+        url: newReport.imageUrl
+      }] : []
     };
 
+    console.log('[App] Created report object:', {
+      id: report.id,
+      title: report.title,
+      coordinates: report.coordinates,
+      district: report.district
+    });
+
     if (user.isOnline) {
-      setReports(prev => [report, ...prev]);
+      // Use dataService to add report (syncs to admin!)
+      console.log('[App] Adding report to dataService...');
+      dataService.addReport(report);
+
       toast.success(
         `🎉 ${translations[user.language].reportSubmitted} #${report.id.slice(-4)}`,
         {
@@ -321,15 +448,7 @@ export default function App() {
         }
       );
     } else {
-      // Simulate offline save
-      toast.info(translations[user.language].savedOffline);
-      // In a real app, this would be stored in localStorage or IndexedDB
-      setTimeout(() => {
-        if (user.isOnline) {
-          setReports(prev => [report, ...prev]);
-          toast.success(translations[user.language].syncComplete);
-        }
-      }, 3000);
+      toast.error('No internet connection. Report saved offline.');
     }
 
     setCurrentScreen('home');
@@ -347,6 +466,10 @@ export default function App() {
   };
 
   const handleUpvote = (reportId: string) => {
+    // Use dataService to persist upvote changes
+    dataService.toggleUpvote(reportId, 'current-user');
+
+    // Also update local state immediately for instant feedback
     setReports(prev => prev.map(report => {
       if (report.id === reportId) {
         const hasUpvoted = report.hasUserUpvoted;
@@ -368,18 +491,22 @@ export default function App() {
       author: 'You'
     };
 
+    // Use dataService to persist comment
+    dataService.addComment(reportId, newComment);
+
+    // Also update local state immediately for instant feedback
     setReports(prev => prev.map(report => {
       if (report.id === reportId) {
         const updatedReport = {
           ...report,
           comments: [...report.comments, newComment]
         };
-        
+
         // Update selectedReport if it's the same report being commented on
         if (selectedReport && selectedReport.id === reportId) {
           setSelectedReport(updatedReport);
         }
-        
+
         return updatedReport;
       }
       return report;
@@ -388,6 +515,32 @@ export default function App() {
 
   const handleLanguageChange = (language: Language) => {
     setUser(prev => ({ ...prev, language }));
+  };
+
+  const handleDeleteReport = (reportId: string) => {
+    // Delete from dataService
+    dataService.deleteReport(reportId);
+
+    // Close modal if it was the selected report
+    if (selectedReport?.id === reportId) {
+      setSelectedReport(null);
+    }
+  };
+
+  const handleFlag = (reportId: string) => {
+    // Log the flag action (could be sent to backend)
+    console.log(`[App] Report ${reportId} flagged for review`);
+
+    // You could add logic here to:
+    // - Update report status
+    // - Send to moderation queue
+    // - Store flag count
+    // - Send to backend
+
+    toast.info('Report flagged for review', {
+      description: 'Our team will investigate this report',
+      duration: 3000,
+    });
   };
 
   const t = translations[user.language];
@@ -405,10 +558,9 @@ export default function App() {
   // Show post-location loading screen
   if (isPostLocationLoading) {
     return (
-      <>
-        <SIHBackground />
-        <PostLocationLoadingScreen detectedLocation={user.district} />
-      </>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
+        <PostLocationLoadingScreen detectedLocation={user.district || user.location?.city || 'Your Location'} />
+      </div>
     );
   }
 
@@ -417,7 +569,7 @@ export default function App() {
       <>
         <SIHBackground />
         <div className="min-h-screen bg-background w-full mx-auto relative mobile-container">
-          <OnboardingScreen 
+          <OnboardingScreen
             onComplete={handleCompleteOnboarding}
             currentLanguage={user.language}
             onLanguageChange={handleLanguageChange}
@@ -437,7 +589,7 @@ export default function App() {
           // Other screens with bottom padding for navigation
           <div className="pb-20">
             {currentScreen === 'home' && (
-              <HomeScreen 
+              <HomeScreen
                 reports={reports}
                 user={user}
                 onReportSelect={setSelectedReport}
@@ -446,26 +598,28 @@ export default function App() {
                 selectedReport={selectedReport}
                 onCloseModal={() => setSelectedReport(null)}
                 onReportAgain={() => setCurrentScreen('report')}
+                onDeleteReport={handleDeleteReport}
+                onFlag={handleFlag}
               />
             )}
-            
+
             {currentScreen === 'analytics' && (
-              <AnalyticsScreen 
+              <AnalyticsScreen
                 reports={reports}
                 user={user}
               />
             )}
-            
+
             {currentScreen === 'report' && (
-              <ReportScreen 
+              <ReportScreen
                 user={user}
                 onSubmit={handleAddReport}
                 onCancel={() => setCurrentScreen('home')}
               />
             )}
-            
+
             {currentScreen === 'profile' && (
-              <ProfileScreen 
+              <ProfileScreen
                 reports={reports.filter(r => r.userId === 'current-user')}
                 user={user}
                 onLanguageChange={handleLanguageChange}
@@ -475,10 +629,10 @@ export default function App() {
             )}
           </div>
         )}
-        
+
         {currentScreen === 'map' && (
           // Map screen handles its own layout
-          <LeafletMapScreen 
+          <SmartHeatmap
             reports={reports}
             user={user}
             onReportSelect={setSelectedReport}
@@ -486,12 +640,12 @@ export default function App() {
           />
         )}
 
-        <BottomNavigation 
+        <BottomNavigation
           currentScreen={currentScreen}
           onScreenChange={setCurrentScreen}
           language={user.language}
         />
-        
+
         <Toaster />
       </div>
     </>

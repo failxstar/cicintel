@@ -9,27 +9,17 @@
 }
 
 /* Desktop mobile simulation */
-@media (min-width: 768px) {
-  .mobile-container {
-    max-width: 375px !important;
-    width: 375px !important;
-    margin: 0 auto;
-  }
-  
-  /* Add mobile device notch/home indicator simulation */
-  .mobile-container::after {
-    content: '';
-    position: fixed;
-    bottom: 4px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 134px;
-    height: 5px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 3px;
-    z-index: 9999;
-  }
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
 }
+
+#root{
+  width:100%;
+  min-height:100vh;
+}
+
 
 /* Ensure mobile devices use full width */
 @media (max-width: 767px) {
@@ -283,7 +273,6 @@
   }
 
   img, svg, video, canvas, audio, iframe, embed, object {
-    vertical-align: middle;
     display: block;
   }
 
@@ -807,6 +796,7 @@
 
   .line-clamp-1 {
     -webkit-line-clamp: 1;
+    line-clamp: 1;
     -webkit-box-orient: vertical;
     display: -webkit-box;
     overflow: hidden;

@@ -1,28 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { MapPin, Languages, Loader } from 'lucide-react';
+import { MapPin, Languages, Loader, AlertCircle, RefreshCw } from 'lucide-react';
 import { translations, Language } from './translations';
-
-interface District {
-  name: string;
-  coordinates: { lat: number; lng: number };
-}
-
-const westBengalDistricts: District[] = [
-  { name: 'Siliguri', coordinates: { lat: 26.7271, lng: 88.3953 } },
-  { name: 'Darjeeling', coordinates: { lat: 27.0360, lng: 88.2627 } },
-  { name: 'Jalpaiguri', coordinates: { lat: 26.5499, lng: 88.7177 } },
-  { name: 'Cooch Behar', coordinates: { lat: 26.3157, lng: 89.4591 } },
-  { name: 'Alipurduar', coordinates: { lat: 26.4915, lng: 89.5229 } },
-  { name: 'Kalimpong', coordinates: { lat: 27.0587, lng: 88.4669 } }
-];
+import { useGeolocation } from '../hooks/useGeolocation';
+import { reverseGeocode, getCachedLocation, cacheLocation, type GeocodeResult } from '../services/geocodingService';
 
 const languageOptions = [
   { value: 'english', label: 'English' },
+  { value: 'tamil', label: 'தமிழ் (Tamil)' },
   { value: 'hindi', label: 'हिन्दी (Hindi)' },
   { value: 'bengali', label: 'বাংলা (Bengali)' },
-  { value: 'santhali', label: 'ᱥᱟᱱᱛᱟᱲᱤ (Santhali)' },
   { value: 'nagpuri', label: 'नागपुरी (Nagpuri)' }
 ];
 
@@ -32,44 +19,142 @@ interface OnboardingScreenProps {
   onLanguageChange: (language: Language) => void;
 }
 
+interface LocationData {
+  coordinates: { lat: number; lng: number };
+  city: string;
+  state: string;
+  formattedAddress: string;
+  fromCache?: boolean;
+}
+
 export function OnboardingScreen({ onComplete, currentLanguage, onLanguageChange }: OnboardingScreenProps) {
   const [step, setStep] = useState<'language' | 'location'>('language');
-  const [locationStep, setLocationStep] = useState<'request' | 'detecting' | 'detected' | 'manual'>('request');
-  const [detectedDistrict, setDetectedDistrict] = useState<District | null>(null);
-  const [selectedDistrict, setSelectedDistrict] = useState<string>('');
+  const [locationStep, setLocationStep] = useState<'request' | 'detecting' | 'detected' | 'error' | 'manual'>('request');
+  const [locationData, setLocationData] = useState<LocationData | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [manualCity, setManualCity] = useState('');
+  const [isGeocodingLoading, setIsGeocodingLoading] = useState(false);
 
   const t = translations[currentLanguage];
 
-  // Simulate GPS detection for Siliguri
-  const simulateGPSDetection = () => {
-    setLocationStep('detecting');
-    
-    // Simulate GPS detection delay and detect Siliguri
-    setTimeout(() => {
-      const siliguri = westBengalDistricts.find(d => d.name === 'Siliguri')!;
-      setDetectedDistrict(siliguri);
+  // Use geolocation hook (don't auto-start)
+  const {
+    position,
+    error: geoError,
+    loading: geoLoading,
+    permissionStatus,
+    refresh
+  } = useGeolocation({ watch: false });
+
+  // Check for cached location on mount
+  useEffect(() => {
+    const cached = getCachedLocation();
+    if (cached && step === 'location') {
+      setLocationData({ ...cached, fromCache: true });
       setLocationStep('detected');
-    }, 1500);
-  };
+    }
+  }, [step]);
+
+  // Handle geolocation position update
+  useEffect(() => {
+    if (position && locationStep === 'detecting') {
+      setIsGeocodingLoading(true);
+
+      // Reverse geocode the coordinates
+      reverseGeocode(position.latitude, position.longitude)
+        .then((result: GeocodeResult) => {
+          const data: LocationData = {
+            coordinates: {
+              lat: position.latitude,
+              lng: position.longitude
+            },
+            city: result.city,
+            state: result.state,
+            formattedAddress: result.formattedAddress
+          };
+
+          setLocationData(data);
+          cacheLocation(data); // Save to localStorage
+          setLocationStep('detected');
+          setLocationError(null);
+        })
+        .catch((error) => {
+          // Geocoding failed, but we have coordinates - use them anyway
+          const data: LocationData = {
+            coordinates: {
+              lat: position.latitude,
+              lng: position.longitude
+            },
+            city: 'Unknown',
+            state: 'Unknown',
+            formattedAddress: `${position.latitude.toFixed(6)}, ${position.longitude.toFixed(6)}`
+          };
+
+          setLocationData(data);
+          setLocationStep('detected');
+          setLocationError('Could not get location name. Using coordinates only.');
+        })
+        .finally(() => {
+          setIsGeocodingLoading(false);
+        });
+    }
+  }, [position, locationStep]);
+
+  // Handle geolocation errors
+  useEffect(() => {
+    if (geoError) {
+      let message = '';
+
+      switch (geoError.type) {
+        case 'PERMISSION_DENIED':
+          message = t.allowLocation || 'Location access is required to show nearby civic issues.';
+          break;
+        case 'POSITION_UNAVAILABLE':
+          message = 'Location information is unavailable. Please check your GPS settings.';
+          break;
+        case 'TIMEOUT':
+          message = 'Location detection timed out. Please try again.';
+          break;
+        default:
+          message = 'An error occurred while getting your location.';
+      }
+
+      setLocationError(message);
+      setLocationStep('error');
+    }
+  }, [geoError, t]);
 
   const handleLanguageSelect = (language: string) => {
     onLanguageChange(language as Language);
     setStep('location');
   };
 
+  const detectRealLocation = () => {
+    setLocationStep('detecting');
+    setLocationError(null);
+    refresh(); // Trigger geolocation
+  };
+
   const handleUseDetectedLocation = () => {
-    if (detectedDistrict) {
-      onComplete(detectedDistrict.name, detectedDistrict.coordinates, currentLanguage);
+    if (locationData) {
+      onComplete(locationData.city, locationData.coordinates, currentLanguage);
     }
   };
 
-  const handleManualDistrictSelect = () => {
-    const district = westBengalDistricts.find(d => d.name === selectedDistrict);
-    if (district) {
-      onComplete(district.name, district.coordinates, currentLanguage);
+  const handleManualLocation = () => {
+    // Use the entered city name
+    if (manualCity.trim()) {
+      // For manual entry, we'll use a default coordinate (can be enhanced)
+      onComplete(manualCity.trim(), { lat: 0, lng: 0 }, currentLanguage);
     }
   };
 
+  const handleRetry = () => {
+    setLocationError(null);
+    detectRealLocation();
+  };
+
+  // Language selection screen
   if (step === 'language') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-50 flex flex-col items-center justify-center p-6">
@@ -78,15 +163,15 @@ export function OnboardingScreen({ onComplete, currentLanguage, onLanguageChange
             {/* Tricolor border */}
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-500 via-white to-green-600 p-1">
               <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
-                <img 
-                  src="/logo.png" 
-                  alt="Swachh Nagar Logo" 
+                <img
+                  src="/logo.png"
+                  alt="CivicIntel Logo"
                   className="w-14 h-14 object-contain rounded-full"
                 />
               </div>
             </div>
           </div>
-          <h1 className="text-2xl mb-2 text-primary">Swachh Nagar</h1>
+          <h1 className="text-xl font-bold text-primary">CivicIntel</h1>
           <p className="text-muted-foreground">
             {translations.english.selectLanguage}
           </p>
@@ -105,7 +190,7 @@ export function OnboardingScreen({ onComplete, currentLanguage, onLanguageChange
           ))}
         </div>
 
-        <Button 
+        <Button
           className="mt-8 w-full max-w-sm"
           onClick={() => setStep('location')}
         >
@@ -115,6 +200,7 @@ export function OnboardingScreen({ onComplete, currentLanguage, onLanguageChange
     );
   }
 
+  // Location screen
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-50 flex flex-col items-center justify-center p-6">
       <div className="text-center mb-8">
@@ -122,20 +208,21 @@ export function OnboardingScreen({ onComplete, currentLanguage, onLanguageChange
           {/* Tricolor border */}
           <div className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-500 via-white to-green-600 p-1">
             <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
-              <img 
-                src="/logo.png" 
-                alt="Swachh Nagar Logo" 
+              <img
+                src="/logo.png"
+                alt="CivicIntel Logo"
                 className="w-14 h-14 object-contain rounded-full"
               />
             </div>
           </div>
         </div>
-        <h1 className="text-2xl mb-2 text-primary">Swachh Nagar</h1>
+        <h1 className="text-2xl mb-2 text-primary">CivicIntel</h1>
         <p className="text-sm text-muted-foreground">
           Digital Civic Reporting Platform
         </p>
       </div>
 
+      {/* Request Permission State */}
       {locationStep === 'request' && (
         <div className="w-full max-w-sm space-y-4">
           <div className="text-center mb-6">
@@ -144,64 +231,159 @@ export function OnboardingScreen({ onComplete, currentLanguage, onLanguageChange
               {t.allowLocation}
             </p>
           </div>
-          
-          <Button 
+
+          <Button
             className="w-full"
-            onClick={simulateGPSDetection}
+            onClick={detectRealLocation}
           >
             <MapPin className="w-4 h-4 mr-2" />
             {t.requestLocation}
           </Button>
+
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setLocationStep('manual')}
+          >
+            Enter Location Manually
+          </Button>
         </div>
       )}
 
+      {/* Detecting State */}
       {locationStep === 'detecting' && (
-        <div className="text-center">
+        <div className="text-center w-full max-w-sm">
           <Loader className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p>{t.detectingLocation}</p>
+          <p className="text-lg font-medium mb-1">
+            {t.detectingLocation}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {isGeocodingLoading ? t.gettingLocationName : t.thisMayTakeFewSeconds}
+          </p>
         </div>
       )}
 
-      {locationStep === 'detected' && detectedDistrict && (
+      {/* Detected State */}
+      {locationStep === 'detected' && locationData && (
         <div className="w-full max-w-sm space-y-4">
-          <div className="text-center mb-6">
-            <div className="bg-green-100 text-green-800 px-4 py-3 rounded-lg mb-4">
-              <p className="font-medium">{t.locationDetected}</p>
-              <p className="text-lg">{detectedDistrict.name}</p>
-              <p className="text-sm opacity-75">
-                {detectedDistrict.coordinates.lat.toFixed(4)}, {detectedDistrict.coordinates.lng.toFixed(4)}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <MapPin className="w-5 h-5 text-green-600" />
+              <p className="font-semibold text-green-900">
+                {locationData.fromCache ? t.usingSavedLocation : t.locationDetected}
               </p>
+            </div>
+
+            <div className="space-y-2 text-sm text-green-800">
+              <div>
+                <strong>{t.city}</strong> {locationData.city}
+              </div>
+              <div>
+                <strong>{t.state}</strong> {locationData.state}
+              </div>
+              <div className="text-xs opacity-75">
+                📍 {locationData.coordinates.lat.toFixed(6)}, {locationData.coordinates.lng.toFixed(6)}
+              </div>
+              {locationData.fromCache && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-green-700 h-auto p-0 mt-2"
+                  onClick={detectRealLocation}
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  {t.refreshLocation}
+                </Button>
+              )}
             </div>
           </div>
 
-          <p className='text-red-500'>For this prototype, we have used a simulated location detection process. In a real-world application, we would implement actual GPS location detection.</p>
-          
-          <Button 
+          <Button
             className="w-full"
             onClick={handleUseDetectedLocation}
           >
             <MapPin className="w-4 h-4 mr-2" />
             {t.useThisLocation}
           </Button>
+
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setLocationStep('manual')}
+          >
+            {t.enterDifferentLocation}
+          </Button>
         </div>
       )}
 
-      {/* Language toggle at bottom */}
-      <div className="absolute bottom-4 left-4">
-        <Select value={currentLanguage} onValueChange={(value: string) => onLanguageChange(value as Language)}>
-          <SelectTrigger className="w-auto">
-            <Languages className="w-4 h-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {languageOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Error State */}
+      {locationStep === 'error' && (
+        <div className="w-full max-w-sm space-y-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              <p className="font-semibold text-red-900">{t.locationError}</p>
+            </div>
+            <p className="text-sm text-red-800">{locationError}</p>
+          </div>
+
+          <Button
+            className="w-full"
+            onClick={handleRetry}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setLocationStep('manual')}
+          >
+            Enter Manually Instead
+          </Button>
+        </div>
+      )}
+
+      {/* Manual Entry State */}
+      {locationStep === 'manual' && (
+        <div className="w-full max-w-sm space-y-4">
+          <div className="text-center mb-4">
+            <h2 className="text-lg font-semibold mb-1">Enter Your Location</h2>
+            <p className="text-sm text-muted-foreground">
+              Type your city or area name
+            </p>
+          </div>
+
+          <label className="block">
+            <span className="text-sm font-medium mb-1 block">City / Area</span>
+            <input
+              type="text"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="e.g., Chennai, Mumbai, Delhi"
+              value={manualCity}
+              onChange={(e) => setManualCity(e.target.value)}
+            />
+          </label>
+
+          <Button
+            className="w-full"
+            onClick={handleManualLocation}
+            disabled={!manualCity.trim()}
+          >
+            Continue
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setLocationStep('request')}
+          >
+            <MapPin className="w-4 h-4 mr-2" />
+            Use GPS Instead
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

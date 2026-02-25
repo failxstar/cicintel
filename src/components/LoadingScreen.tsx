@@ -5,34 +5,34 @@ import { Heart, Users, Loader } from 'lucide-react';
 export function LoadingScreen() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex flex-col items-center justify-center p-6">
-      <motion.div 
+      <motion.div
         className="text-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
         {/* App Logo */}
-        <motion.div 
+        <motion.div
           className="w-24 h-24 mx-auto mb-6"
-          animate={{ 
+          animate={{
             scale: [1, 1.05, 1],
-            rotate: [0, 2, -2, 0] 
+            rotate: [0, 2, -2, 0]
           }}
-          transition={{ 
+          transition={{
             duration: 2,
             repeat: Infinity,
             repeatType: "reverse"
           }}
         >
-          <img 
-            src="/logo.png" 
-            alt="Swachh Nagar Logo" 
+          <img
+            src="/logo.png"
+            alt="CivicIntel Logo"
             className="w-full h-full object-contain rounded-full shadow-lg"
           />
         </motion.div>
 
         {/* Circular Loader */}
-        <motion.div 
+        <motion.div
           className="w-12 h-12 mx-auto mb-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -51,7 +51,7 @@ export function LoadingScreen() {
         </motion.div>
 
         {/* Features */}
-        <motion.div 
+        <motion.div
           className="space-y-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

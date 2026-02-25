@@ -1,4 +1,4 @@
-export type Language = 'english' | 'hindi' | 'bengali' | 'santhali' | 'nagpuri';
+export type Language = 'english' | 'tamil' | 'hindi' | 'bengali' | 'nagpuri';
 
 export const translations = {
   english: {
@@ -9,13 +9,13 @@ export const translations = {
     demoLabel: "Hardcoded demo — Jharkhand only",
     upvote: "Upvote",
     comment: "Comment",
-    map: "Map", 
+    map: "Map",
     profile: "Profile",
     reportAgain: "Report Again",
     statusPending: "Status: Pending",
-    statusInProgress: "Status: Submitted", 
+    statusInProgress: "Status: Submitted",
     statusResolved: "Status: Resolved",
-    
+
     // Additional strings
     home: "Home",
     requestLocation: "Request Location Permission",
@@ -27,7 +27,15 @@ export const translations = {
     manualSelection: "Or select manually:",
     selectLanguage: "Select Language",
     continue: "Continue",
-    
+    usingSavedLocation: "Using Saved Location",
+    city: "City:",
+    state: "State:",
+    refreshLocation: "Refresh Location",
+    enterDifferentLocation: "Enter Different Location",
+    locationError: "Location Error",
+    gettingLocationName: "Getting location name...",
+    thisMayTakeFewSeconds: "This may take a few seconds",
+
     // Report screen
     capturePhoto: "Capture Photo",
     issueType: "Issue Type",
@@ -37,7 +45,7 @@ export const translations = {
     recordVoiceNote: "Record Voice Note",
     location: "Location",
     cancel: "Cancel",
-    
+
     // Feed
     localFeed: "Local Social Feed",
     search: "Search by keyword or ward...",
@@ -49,15 +57,15 @@ export const translations = {
     viewDetails: "View Details",
     addComment: "Add comment...",
     postComment: "Post",
-    
+
     // Map
     allReports: "All",
     road: "Road",
-    garbage: "Garbage", 
+    garbage: "Garbage",
     water: "Water",
     streetlight: "Streetlight",
     unresolved: "Unresolved",
-    
+
     // Profile
     myReports: "My Reports",
     settings: "Settings",
@@ -66,13 +74,53 @@ export const translations = {
     offlineMode: "Offline Mode",
     slaCountdown: "SLA: 5 days remaining",
     rateResolution: "Rate this resolution",
-    
+
     // Status and notifications
     reportSubmitted: "Report submitted successfully! ID:",
     syncComplete: "Sync complete - report uploaded",
     tamperDetected: "⚠️ Tamper detected",
     highPriority: "🔴 High Priority",
-    
+
+    // Department names
+    departmentAssignment: "Department Assignment",
+    publicWorksDept: "Public Works Department",
+    wasteManagementDept: "Waste Management Department",
+    electricalDept: "Electrical Department",
+    waterSupplyDept: "Water Supply Department",
+    drainageDept: "Drainage Department",
+    municipalCorporation: "Municipal Corporation",
+    estimatedResponse: "Estimated response:",
+    ward: "Ward",
+    reportedVia: "issue reported via CivicIntel",
+
+    // Action buttons
+    play: "Play",
+    flag: "Flag",
+    delete: "Delete",
+    voiceNote: "Voice note",
+    deleteConfirm: "Delete Report?",
+    deleteMessage: "Are you sure you want to delete this report? This action cannot be undone.",
+    cancelAction: "Cancel",
+
+    // Analytics
+    analyticsDashboard: "Analytics Dashboard",
+    departments: "Departments",
+    resolutionRate: "Resolution Rate",
+    avgResolution: "Avg Resolution",
+    activeCitizens: "Active Citizens",
+    topIssueTypes: "Top Issue Types",
+    criticalAreas: "Critical Areas",
+    recentActivity: "Recent Activity",
+    reports: "reports",
+    smartHeatmap: "Smart Heatmap Intelligence",
+    days: "days",
+    hours: "hours",
+    kmAway: "km away",
+    activeReports: "Active Reports",
+    realTimeUpdates: "Real-time updates",
+    prototypeDataMessage: "All the data shown here is hardcoded for the prototype",
+    siliguriMunicipalCorporation: "Siliguri Municipal Corporation",
+
     // Issue types
     pothole: "Pothole",
     brokenRoad: "Broken Road",
@@ -82,22 +130,22 @@ export const translations = {
     brokenStreetlight: "Broken Streetlight",
     other: "Other"
   },
-  
+
   hindi: {
     // Core UI strings
     report: "रिपोर्ट करें",
-    submit: "सबमिट करें", 
+    submit: "सबमिट करें",
     savedOffline: "स्थानीय रूप से सहेजा गया — ऑनलाइन होने पर सिंक करेगा",
     demoLabel: "हार्डकोड्ड डेमो — केवल झारखंड",
     upvote: "अपवोट",
-    comment: "टिप्पणी", 
+    comment: "टिप्पणी",
     map: "मानचित्र",
     profile: "प्रोफ़ाइल",
     reportAgain: "फिर से रिपोर्ट करें",
     statusPending: "स्थिति: लंबित",
     statusInProgress: "स्थिति: प्रगति पर",
     statusResolved: "स्थिति: हल हुआ",
-    
+
     // Additional strings
     home: "होम",
     requestLocation: "स्थान अनुमति का अनुरोध करें",
@@ -109,7 +157,15 @@ export const translations = {
     manualSelection: "या मैन्युअल रूप से चुनें:",
     selectLanguage: "भाषा चुनें",
     continue: "जारी रखें",
-    
+    usingSavedLocation: "सहेजे गए स्थान का उपयोग कर रहे हैं",
+    city: "शहर:",
+    state: "राज्य:",
+    refreshLocation: "स्थान रिफ्रेश करें",
+    enterDifferentLocation: "अलग स्थान दर्ज करें",
+    locationError: "स्थान त्रुटि",
+    gettingLocationName: "स्थान का नाम प्राप्त कर रहे हैं...",
+    thisMayTakeFewSeconds: "इसमें कुछ सेकंड लग सकते हैं",
+
     // Report screen
     capturePhoto: "फोटो लें",
     issueType: "समस्या का प्रकार",
@@ -119,27 +175,27 @@ export const translations = {
     recordVoiceNote: "आवाज का नोट रिकॉर्ड करें",
     location: "स्थान",
     cancel: "रद्द करें",
-    
+
     // Feed
     localFeed: "स्थानीय सामाजिक फीड",
     search: "कीवर्ड या वार्ड द्वारा खोजें...",
     minutesAgo: "मिनट पहले",
-    hoursAgo: "घंटे पहले", 
+    hoursAgo: "घंटे पहले",
     daysAgo: "दिन पहले",
     confidence: "विश्वास",
     comments: "टिप्पणियां",
     viewDetails: "विवरण देखें",
     addComment: "टिप्पणी जोड़ें...",
     postComment: "पोस्ट करें",
-    
+
     // Map
     allReports: "सभी",
     road: "सड़क",
     garbage: "कचरा",
-    water: "पानी", 
+    water: "पानी",
     streetlight: "स्ट्रीट लाइट",
     unresolved: "अनसुलझा",
-    
+
     // Profile
     myReports: "मेरी रिपोर्ट्स",
     settings: "सेटिंग्स",
@@ -148,13 +204,53 @@ export const translations = {
     offlineMode: "ऑफलाइन मोड",
     slaCountdown: "SLA: 5 दिन बचे हैं",
     rateResolution: "इस समाधान को रेट करें",
-    
+
     // Status and notifications
     reportSubmitted: "रिपोर्ट सफलतापूर्वक सबमिट की गई! ID:",
     syncComplete: "सिंक पूर्ण - रिपोर्ट अपलोड की गई",
     tamperDetected: "⚠️ छेड़छाड़ का पता चला",
     highPriority: "🔴 उच्च प्राथमिकता",
-    
+
+    // Department names
+    departmentAssignment: "विभाग असाइनमेंट",
+    publicWorksDept: "लोक निर्माण विभाग",
+    wasteManagementDept: "अपशिष्ट प्रबंधन विभाग",
+    electricalDept: "विद्युत विभाग",
+    waterSupplyDept: "जल आपूर्ति विभाग",
+    drainageDept: "जल निकासी विभाग",
+    municipalCorporation: "नगर निगम",
+    estimatedResponse: "अनुमानित प्रतिक्रिया:",
+    ward: "वार्ड",
+    reportedVia: "CivicIntel के माध्यम से रिपोर्ट की गई",
+
+    // Action buttons
+    play: "प्ले करें",
+    flag: "फ्लैग करें",
+    delete: "हटाएं",
+    voiceNote: "आवाज का नोट",
+    deleteConfirm: "रिपोर्ट हटाएं?",
+    deleteMessage: "क्या आप वाकई इस रिपोर्ट को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।",
+    cancelAction: "रद्द करें",
+
+    // Analytics
+    analyticsDashboard: "विश्लेषण डैशबोर्ड",
+    departments: "विभाग",
+    resolutionRate: "समाधान दर",
+    avgResolution: "औसत समाधान",
+    activeCitizens: "सक्रिय नागरिक",
+    topIssueTypes: "शीर्ष समस्या प्रकार",
+    criticalAreas: "महत्वपूर्ण क्षेत्र",
+    recentActivity: "हाल की गतिविधि",
+    reports: "रिपोर्ट",
+    smartHeatmap: "स्मार्ट हीटमैप इंटेलिजेंस",
+    days: "दिन",
+    hours: "घंटे",
+    kmAway: "कि.मी. दूर",
+    activeReports: "सक्रिय रिपोर्ट",
+    realTimeUpdates: "वास्तविक समय अपडेट",
+    prototypeDataMessage: "यहां दिखाया गया सभी डेटा प्रोटोटाइप के लिए हार्डकोडेड है",
+    siliguriMunicipalCorporation: "सिलीगुड़ी नगर निगम",
+
     // Issue types
     pothole: "गड्ढा",
     brokenRoad: "टूटी सड़क",
@@ -164,7 +260,137 @@ export const translations = {
     brokenStreetlight: "टूटी स्ट्रीट लाइट",
     other: "अन्य"
   },
-  
+
+  tamil: {
+    // Core UI strings
+    report: "புகார்",
+    submit: "சமர்ப்பிக்கவும்",
+    savedOffline: "உள்ளூரில் சேமிக்கப்பட்டது — இணையதில் வரும்போது ஒத்திசைக்கும்",
+    demoLabel: "முன்மாதிரி பதிப்பு — சிலிகுரி மட்டும்",
+    upvote: "ஆதரவு",
+    comment: "கருத்து",
+    map: "வரைபடம்",
+    profile: "சுயவிவரம்",
+    reportAgain: "மீண்டும் புகார் அளிக்கவும்",
+    statusPending: "நிலை: நிலுவையில்",
+    statusInProgress: "நிலை: சமர்ப்பிக்கப்பட்டது",
+    statusResolved: "நிலை: தீர்க்கப்பட்டது",
+
+    // Additional strings
+    home: "முகப்பு",
+    requestLocation: "இடம் அனுமதி கோரவும்",
+    useThisLocation: "இந்த இடத்தை பயன்படுத்தவும்",
+    selectDistrict: "மாவட்டத்தைத் தேர்ந்தெடுக்கவும்",
+    allowLocation: "உங்கள் நகராட்சி பகுதியை தானாக கண்டறிய இட அனுமதி அளிக்கவும்",
+    detectingLocation: "உங்கள் இடம் கண்டறியப்படுகிறது...",
+    locationDetected: "இடம் கண்டறியப்பட்டது:",
+    manualSelection: "அல்லது கைமுறையாக தேர்ந்தெடுக்கவும்:",
+    selectLanguage: "மொழியைத் தேர்ந்தெடுக்கவும்",
+    continue: "தொடரவும்",
+    usingSavedLocation: "சேமிக்கப்பட்ட இடத்தை பயன்படுத்துகிறது",
+    city: "நகரம்:",
+    state: "மாநிலம்:",
+    refreshLocation: "இடத்தை புதுப்பிக்கவும்",
+    enterDifferentLocation: "வேறு இடத்தை உள்ளிடவும்",
+    locationError: "இட பிழை",
+    gettingLocationName: "இட பெயரை பெறுகிறது...",
+    thisMayTakeFewSeconds: "இது சில விநாடிகள் எடுக்கலாம்",
+
+    // Report screen
+    capturePhoto: "புகைப்படம் எடுக்கவும்",
+    issueType: "பிரச்சினை வகை",
+    severity: "தீவிரம்",
+    description: "விளக்கம்",
+    optional: "விரும்பினால்",
+    recordVoiceNote: "குரல் குறிப்பு பதிவு செய்யவும்",
+    location: "இடம்",
+    cancel: "ரத்து செய்",
+
+    // Feed
+    localFeed: "உள்ளூர் செய்திகள்",
+    search: "தேடல்...",
+    minutesAgo: "நிமிடங்களுக்கு முன்",
+    hoursAgo: "மணி நேரங்களுக்கு முன்",
+    daysAgo: "நாட்களுக்கு முன்",
+    confidence: "நம்பிக்கை",
+    comments: "கருத்துகள்",
+    viewDetails: "விவரங்களைக் காண்க",
+    addComment: "கருத்து சேர்க்கவும்...",
+    postComment: "பதிவிடவும்",
+
+    // Map
+    allReports: "அனைத்தும்",
+    road: "சாலை",
+    garbage: "குப்பை",
+    water: "நீர்",
+    streetlight: "தெரு விளக்கு",
+    unresolved: "தீர்க்கப்படாதது",
+
+    // Profile
+    myReports: "எனது புகார்கள்",
+    settings: "அமைப்புகள்",
+    language: "மொழி",
+    onlineMode: "இணைய முறை",
+    offlineMode: "இணையமில்லா முறை",
+    slaCountdown: "SLA: 5 நாட்கள் மீதம்",
+    rateResolution: "இந்த தீர்வை மதிப்பிடவும்",
+
+    // Status and notifications
+    reportSubmitted: "புகார் வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது! அடையாள எண்:",
+    syncComplete: "ஒத்திசைவு முடிந்தது - புகார் பதிவேற்றப்பட்டது",
+    tamperDetected: "⚠️ மாற்றம் கண்டறியப்பட்டது",
+    highPriority: "🔴 அதிக முன்னுரிமை",
+
+    // Department names
+    departmentAssignment: "துறை ஒதுக்கீடு",
+    publicWorksDept: "பொதுப்பணித் துறை",
+    wasteManagementDept: "கழிவு மேலாண்மை துறை",
+    electricalDept: "மின்சாரத் துறை",
+    waterSupplyDept: "குடிநீர் வழங்கல் துறை",
+    drainageDept: "வடிகால் துறை",
+    municipalCorporation: "நகராட்சி கழகம்",
+    estimatedResponse: "எதிர்பார்க்கப்படும் பதில்:",
+    ward: "வட்டம்",
+    reportedVia: "CivicIntel மூலம் புகார் அளிக்கப்பட்டது",
+
+    // Action buttons
+    play: "இயக்கு",
+    flag: "கொடியிடு",
+    delete: "நீக்கு",
+    voiceNote: "குரல் குறிப்பு",
+    deleteConfirm: "புகாரை நீக்கவா?",
+    deleteMessage: "இந்த புகாரை நீக்க விரும்புகிறீர்களா? இது செயல்தவிர்க்க முடியாது.",
+    cancelAction: "ரத்து செய்",
+
+    // Analytics
+    analyticsDashboard: "பகுப்பாய்வு முகப்பு",
+    departments: "துறைகள்",
+    resolutionRate: "தீர்வு விகிதம்",
+    avgResolution: "சராசரி தீர்வு",
+    activeCitizens: "செயலில் உள்ள குடிமக்கள்",
+    topIssueTypes: "முதன்மை பிரச்சினை வகைகள்",
+    criticalAreas: "முக்கிய பகுதிகள்",
+    recentActivity: "சமீபத்திய செயல்பாடு",
+    reports: "புகார்கள்",
+    smartHeatmap: "புத்திசாலித்தன வெப்ப வரைபடம்",
+    days: "நாட்கள்",
+    hours: "மணி நேரங்கள்",
+    kmAway: "கிமீ தூரம்",
+    activeReports: "செயலில் உள்ள புகார்கள்",
+    realTimeUpdates: "நேரடி புதுப்பிப்புகள்",
+    prototypeDataMessage: "இங்கு காட்டப்படும் அனைத்து தரவும் மாதிரிக்காக கடினமாக குறியிடப்பட்டுள்ளது",
+    siliguriMunicipalCorporation: "சிலிகுரி நகராட்சி கழகம்",
+
+    // Issue types
+    pothole: "குழி",
+    brokenRoad: "உடைந்த சாலை",
+    garbagePile: "குப்பைக் குவியல்",
+    drainageIssue: "வடிகால் பிரச்சினை",
+    waterLogging: "நீர் தேக்கம்",
+    brokenStreetlight: "உடைந்த தெரு விளக்கு",
+    other: "மற்றவை"
+  },
+
   bengali: {
     // Core UI strings
     report: "রিপোর্ট করুন",
@@ -173,13 +399,13 @@ export const translations = {
     demoLabel: "হার্ডকোডেড ডেমো — শুধুমাত্র ঝারখণ্ড",
     upvote: "আপভোট",
     comment: "মন্তব্য",
-    map: "মানচিত্র", 
+    map: "মানচিত্র",
     profile: "প্রোফাইল",
     reportAgain: "আবার রিপোর্ট করুন",
     statusPending: "স্থিতি: মুলতুবি",
     statusInProgress: "স্থিতি: প্রক্রিয়াধীন",
     statusResolved: "স্থিতি: সমাধান হয়েছে",
-    
+
     // Additional strings  
     home: "হোম",
     requestLocation: "অবস্থানের অনুমতির অনুরোধ করুন",
@@ -190,8 +416,16 @@ export const translations = {
     locationDetected: "অবস্থান সনাক্ত করা হয়েছে:",
     manualSelection: "অথবা ম্যানুয়ালি নির্বাচন করুন:",
     selectLanguage: "ভাষা নির্বাচন করুন",
-    continue: "অব্যাহত রাখুন",
-    
+    continue: "চালিয়ে যান",
+    usingSavedLocation: "সংরক্ষিত অবস্থান ব্যবহার করা হচ্ছে",
+    city: "শহর:",
+    state: "রাজ্য:",
+    refreshLocation: "অবস্থান রিফ্রেশ করুন",
+    enterDifferentLocation: "ভিন্ন অবস্থান লিখুন",
+    locationError: "অবস্থান ত্রুটি",
+    gettingLocationName: "অবস্থানের নাম পাওয়া হচ্ছে...",
+    thisMayTakeFewSeconds: "এটি কয়েক সেকেন্ড সময় নিতে পারে",
+
     // Report screen
     capturePhoto: "ছবি তুলুন",
     issueType: "সমস্যার ধরন",
@@ -201,27 +435,27 @@ export const translations = {
     recordVoiceNote: "ভয়েস নোট রেকর্ড করুন",
     location: "অবস্থান",
     cancel: "বাতিল করুন",
-    
+
     // Feed
     localFeed: "স্থানীয় সামাজিক ফিড",
     search: "কীওয়ার্ড বা ওয়ার্ড দিয়ে খুঁজুন...",
     minutesAgo: "মিনিট আগে",
     hoursAgo: "ঘণ্টা আগে",
-    daysAgo: "দিন আগে", 
+    daysAgo: "দিন আগে",
     confidence: "আস্থা",
     comments: "মন্তব্য",
     viewDetails: "বিস্তারিত দেখুন",
     addComment: "মন্তব্য যোগ করুন...",
     postComment: "পোস্ট করুন",
-    
+
     // Map
     allReports: "সকল",
     road: "রাস্তা",
     garbage: "আবর্জনা",
     water: "পানি",
-    streetlight: "স্ট্রিট লাইট", 
+    streetlight: "স্ট্রিট লাইট",
     unresolved: "অমীমাংসিত",
-    
+
     // Profile
     myReports: "আমার রিপোর্ট",
     settings: "সেটিংস",
@@ -230,13 +464,53 @@ export const translations = {
     offlineMode: "অফলাইন মোড",
     slaCountdown: "SLA: ৫ দিন বাকি",
     rateResolution: "এই সমাধানটি রেট করুন",
-    
+
     // Status and notifications
     reportSubmitted: "রিপোর্ট সফলভাবে জমা দেওয়া হয়েছে! ID:",
     syncComplete: "সিঙ্ক সম্পন্ন - রিপোর্ট আপলোড হয়েছে",
     tamperDetected: "⚠️ ছেড়া ধরা পড়েছে",
     highPriority: "🔴 উচ্চ অগ্রাধিকার",
-    
+
+    // Department names
+    departmentAssignment: "বিভাগ নিয়োগ",
+    publicWorksDept: "জনপূর্ত বিভাগ",
+    wasteManagementDept: "বর্জ্য ব্যবস্থাপনা বিভাগ",
+    electricalDept: "বিদ্যুৎ বিভাগ",
+    waterSupplyDept: "জল সরবরাহ বিভাগ",
+    drainageDept: "নিকাশি বিভাগ",
+    municipalCorporation: "পৌর কর্পোরেশন",
+    estimatedResponse: "আনুমানিক প্রতিক্রিয়া:",
+    ward: "ওয়ার্ড",
+    reportedVia: "CivicIntel মাধ্যমে রিপোর্ট করা হয়েছে",
+
+    // Action buttons
+    play: "প্লে করুন",
+    flag: "ফ্ল্যাগ করুন",
+    delete: "মুছে ফেলুন",
+    voiceNote: "ভয়েস নোট",
+    deleteConfirm: "রিপোর্ট মুছুন?",
+    deleteMessage: "আপনি কি নিশ্চিত এই রিপোর্টটি মুছে ফেলতে চান? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।",
+    cancelAction: "বাতিল করুন",
+
+    // Analytics
+    analyticsDashboard: "বিশ্লেষণ ড্যাশবোর্ড",
+    departments: "বিভাগসমূহ",
+    resolutionRate: "সমাধান হার",
+    avgResolution: "গড় সমাধান",
+    activeCitizens: "সক্রিয় নাগরিক",
+    topIssueTypes: "শীর্ষ সমস্যা প্রকার",
+    criticalAreas: "সমালোচনামূলক এলাকা",
+    recentActivity: "সাম্প্রতিক কার্যকলাপ",
+    reports: "রিপোর্ট",
+    smartHeatmap: "স্মার্ট হিটম্যাপ ইন্টেলিজেন্স",
+    days: "দিন",
+    hours: "ঘণ্টা",
+    kmAway: "কিমি দূরে",
+    activeReports: "সক্রিয় রিপোর্ট",
+    realTimeUpdates: "রিয়েল-টাইম আপডেট",
+    prototypeDataMessage: "এখানে দেখানো সমস্ত ডেটা প্রোটোটাইপের জন্য হার্ডকোডেড",
+    siliguriMunicipalCorporation: "শিলিগুড়ি পৌর কর্পোরেশন",
+
     // Issue types
     pothole: "গর্ত",
     brokenRoad: "ভাঙা রাস্তা",
@@ -246,89 +520,8 @@ export const translations = {
     brokenStreetlight: "ভাঙা স্ট্রিট লাইট",
     other: "অন্যান্য"
   },
-  
-  santhali: {
-    // Core UI strings with transliterated placeholders
-    report: "Santhali: [Report placeholder]",
-    submit: "Santhali: [Submit placeholder]", 
-    savedOffline: "Santhali: [Saved locally placeholder]",
-    demoLabel: "Santhali: [Demo label placeholder]",
-    upvote: "Santhali: [Upvote placeholder]",
-    comment: "Santhali: [Comment placeholder]",
-    map: "Santhali: [Map placeholder]",
-    profile: "Santhali: [Profile placeholder]", 
-    reportAgain: "Santhali: [Report Again placeholder]",
-    statusPending: "Santhali: [Status Pending placeholder]",
-    statusInProgress: "Santhali: [Status Submitted placeholder]",
-    statusResolved: "Santhali: [Status Resolved placeholder]",
-    
-    // Additional strings
-    home: "Santhali: [Home placeholder]",
-    requestLocation: "Santhali: [Request Location placeholder]",
-    useThisLocation: "Santhali: [Use Location placeholder]",
-    selectDistrict: "Santhali: [Select District placeholder]",
-    allowLocation: "Santhali: [Allow Location placeholder]",
-    detectingLocation: "Santhali: [Detecting placeholder]",
-    locationDetected: "Santhali: [Location detected placeholder]",
-    manualSelection: "Santhali: [Manual selection placeholder]",
-    selectLanguage: "Santhali: [Select Language placeholder]",
-    continue: "Santhali: [Continue placeholder]",
-    
-    // Report screen
-    capturePhoto: "Santhali: [Capture Photo placeholder]",
-    issueType: "Santhali: [Issue Type placeholder]",
-    severity: "Santhali: [Severity placeholder]",
-    description: "Santhali: [Description placeholder]",
-    optional: "Santhali: [Optional placeholder]",
-    recordVoiceNote: "Santhali: [Voice Note placeholder]",
-    location: "Santhali: [Location placeholder]",
-    cancel: "Santhali: [Cancel placeholder]",
-    
-    // Feed
-    localFeed: "Santhali: [Local Feed placeholder]",
-    search: "Santhali: [Search placeholder]",
-    minutesAgo: "Santhali: [Minutes ago placeholder]",
-    hoursAgo: "Santhali: [Hours ago placeholder]",
-    daysAgo: "Santhali: [Days ago placeholder]",
-    confidence: "Santhali: [Confidence placeholder]",
-    comments: "Santhali: [Comments placeholder]",
-    viewDetails: "Santhali: [View Details placeholder]",
-    addComment: "Santhali: [Add Comment placeholder]",
-    postComment: "Santhali: [Post placeholder]",
-    
-    // Map
-    allReports: "Santhali: [All placeholder]",
-    road: "Santhali: [Road placeholder]",
-    garbage: "Santhali: [Garbage placeholder]",
-    water: "Santhali: [Water placeholder]",
-    streetlight: "Santhali: [Streetlight placeholder]",
-    unresolved: "Santhali: [Unresolved placeholder]",
-    
-    // Profile
-    myReports: "Santhali: [My Reports placeholder]",
-    settings: "Santhali: [Settings placeholder]",
-    language: "Santhali: [Language placeholder]",
-    onlineMode: "Santhali: [Online Mode placeholder]",
-    offlineMode: "Santhali: [Offline Mode placeholder]",
-    slaCountdown: "Santhali: [SLA placeholder]",
-    rateResolution: "Santhali: [Rate Resolution placeholder]",
-    
-    // Status and notifications
-    reportSubmitted: "Santhali: [Report Submitted placeholder]",
-    syncComplete: "Santhali: [Sync Complete placeholder]",
-    tamperDetected: "Santhali: [Tamper Detected placeholder]",
-    highPriority: "Santhali: [High Priority placeholder]",
-    
-    // Issue types
-    pothole: "Santhali: [Pothole placeholder]",
-    brokenRoad: "Santhali: [Broken Road placeholder]",
-    garbagePile: "Santhali: [Garbage Pile placeholder]",
-    drainageIssue: "Santhali: [Drainage placeholder]",
-    waterLogging: "Santhali: [Water Logging placeholder]",
-    brokenStreetlight: "Santhali: [Broken Streetlight placeholder]",
-    other: "Santhali: [Other placeholder]"
-  },
-  
+
+
   nagpuri: {
     // Core UI strings with transliterated placeholders
     report: "Nagpuri: [Report placeholder]",
@@ -343,7 +536,7 @@ export const translations = {
     statusPending: "Nagpuri: [Status Pending placeholder]",
     statusInProgress: "Nagpuri: [Status Submitted placeholder]",
     statusResolved: "Nagpuri: [Status Resolved placeholder]",
-    
+
     // Additional strings
     home: "Nagpuri: [Home placeholder]",
     requestLocation: "Nagpuri: [Request Location placeholder]",
@@ -355,7 +548,15 @@ export const translations = {
     manualSelection: "Nagpuri: [Manual selection placeholder]",
     selectLanguage: "Nagpuri: [Select Language placeholder]",
     continue: "Nagpuri: [Continue placeholder]",
-    
+    usingSavedLocation: "Nagpuri: [Using Saved Location placeholder]",
+    city: "Nagpuri: [City placeholder]",
+    state: "Nagpuri: [State placeholder]",
+    refreshLocation: "Nagpuri: [Refresh Location placeholder]",
+    enterDifferentLocation: "Nagpuri: [Enter Different Location placeholder]",
+    locationError: "Nagpuri: [Location Error placeholder]",
+    gettingLocationName: "Nagpuri: [Getting location name placeholder]",
+    thisMayTakeFewSeconds: "Nagpuri: [May take few seconds placeholder]",
+
     // Report screen
     capturePhoto: "Nagpuri: [Capture Photo placeholder]",
     issueType: "Nagpuri: [Issue Type placeholder]",
@@ -365,7 +566,7 @@ export const translations = {
     recordVoiceNote: "Nagpuri: [Voice Note placeholder]",
     location: "Nagpuri: [Location placeholder]",
     cancel: "Nagpuri: [Cancel placeholder]",
-    
+
     // Feed
     localFeed: "Nagpuri: [Local Feed placeholder]",
     search: "Nagpuri: [Search placeholder]",
@@ -377,7 +578,7 @@ export const translations = {
     viewDetails: "Nagpuri: [View Details placeholder]",
     addComment: "Nagpuri: [Add Comment placeholder]",
     postComment: "Nagpuri: [Post placeholder]",
-    
+
     // Map
     allReports: "Nagpuri: [All placeholder]",
     road: "Nagpuri: [Road placeholder]",
@@ -385,7 +586,7 @@ export const translations = {
     water: "Nagpuri: [Water placeholder]",
     streetlight: "Nagpuri: [Streetlight placeholder]",
     unresolved: "Nagpuri: [Unresolved placeholder]",
-    
+
     // Profile
     myReports: "Nagpuri: [My Reports placeholder]",
     settings: "Nagpuri: [Settings placeholder]",
@@ -394,13 +595,53 @@ export const translations = {
     offlineMode: "Nagpuri: [Offline Mode placeholder]",
     slaCountdown: "Nagpuri: [SLA placeholder]",
     rateResolution: "Nagpuri: [Rate Resolution placeholder]",
-    
+
     // Status and notifications
-    reportSubmitted: "Nagpuri: [Report Submitted placeholder]",
-    syncComplete: "Nagpuri: [Sync Complete placeholder]",
-    tamperDetected: "Nagpuri: [Tamper Detected placeholder]",
+    reportSubmitted: "Nagpuri: [Report submitted placeholder]",
+    syncComplete: "Nagpuri: [Sync complete placeholder]",
+    tamperDetected: "Nagpuri: [Tamper detected placeholder]",
     highPriority: "Nagpuri: [High Priority placeholder]",
-    
+
+    // Department names
+    departmentAssignment: "Nagpuri: [Department Assignment placeholder]",
+    publicWorksDept: "Nagpuri: [Public Works Dept placeholder]",
+    wasteManagementDept: "Nagpuri: [Waste Management Dept placeholder]",
+    electricalDept: "Nagpuri: [Electrical Dept placeholder]",
+    waterSupplyDept: "Nagpuri: [Water Supply Dept placeholder]",
+    drainageDept: "Nagpuri: [Drainage Dept placeholder]",
+    municipalCorporation: "Nagpuri: [Municipal Corporation placeholder]",
+    estimatedResponse: "Nagpuri: [Estimated response placeholder]",
+    ward: "Nagpuri: [Ward placeholder]",
+    reportedVia: "Nagpuri: [Reported via CivicIntel placeholder]",
+
+    // Action buttons
+    play: "Nagpuri: [Play placeholder]",
+    flag: "Nagpuri: [Flag placeholder]",
+    delete: "Nagpuri: [Delete placeholder]",
+    voiceNote: "Nagpuri: [Voice note placeholder]",
+    deleteConfirm: "Nagpuri: [Delete confirm placeholder]",
+    deleteMessage: "Nagpuri: [Delete message placeholder]",
+    cancelAction: "Nagpuri: [Cancel placeholder]",
+
+    // Analytics
+    analyticsDashboard: "Nagpuri: [Analytics Dashboard placeholder]",
+    departments: "Nagpuri: [Departments placeholder]",
+    resolutionRate: "Nagpuri: [Resolution Rate placeholder]",
+    avgResolution: "Nagpuri: [Avg Resolution placeholder]",
+    activeCitizens: "Nagpuri: [Active Citizens placeholder]",
+    topIssueTypes: "Nagpuri: [Top Issue Types placeholder]",
+    criticalAreas: "Nagpuri: [Critical Areas placeholder]",
+    recentActivity: "Nagpuri: [Recent Activity placeholder]",
+    reports: "Nagpuri: [Reports placeholder]",
+    smartHeatmap: "Nagpuri: [Smart Heatmap placeholder]",
+    days: "Nagpuri: [Days placeholder]",
+    hours: "Nagpuri: [Hours placeholder]",
+    kmAway: "Nagpuri: [km away placeholder]",
+    activeReports: "Nagpuri: [Active Reports placeholder]",
+    realTimeUpdates: "Nagpuri: [Real-time updates placeholder]",
+    prototypeDataMessage: "Nagpuri: [Prototype data message placeholder]",
+    siliguriMunicipalCorporation: "Nagpuri: [Siliguri Municipal Corporation placeholder]",
+
     // Issue types
     pothole: "Nagpuri: [Pothole placeholder]",
     brokenRoad: "Nagpuri: [Broken Road placeholder]",

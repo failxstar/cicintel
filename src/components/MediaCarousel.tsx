@@ -40,7 +40,8 @@ export function MediaCarousel({ media, className = '' }: MediaCarouselProps) {
   return (
     <div className={`relative ${className}`}>
       {/* Main media display */}
-      <div className="relative overflow-hidden h-full min-h-48">
+      <div className="relative overflow-hidden h-full rounded-xl">
+
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
@@ -48,21 +49,25 @@ export function MediaCarousel({ media, className = '' }: MediaCarouselProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="relative h-full"
+            className="relative w-full h-full"
+
           >
             {currentMedia.type === 'image' ? (
-              <ImageWithFallback
-                src={currentMedia.url}
-                alt={`Media ${currentIndex + 1}`}
-                className="w-full h-full object-cover"
-              />
+              <div className="relative w-full h-full overflow-hidden rounded-xl group">
+                <ImageWithFallback
+                  src={currentMedia.url}
+                  alt={`Media ${currentIndex + 1}`}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                />
+              </div>
             ) : (
-              <div className="relative w-full h-full bg-black flex items-center justify-center">
+              <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden rounded-xl group">
                 <img
                   src={currentMedia.thumbnail || currentMedia.url}
                   alt={`Video ${currentIndex + 1}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
+
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                   <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
                     <Play className="w-8 h-8 text-gray-800 ml-1" />
@@ -106,9 +111,8 @@ export function MediaCarousel({ media, className = '' }: MediaCarouselProps) {
             <button
               key={index}
               onClick={(e) => goToSlide(index, e)}
-              className={`w-2 h-2 rounded-full transition-colors ${
-                index === currentIndex ? 'bg-white' : 'bg-white/50'
-              }`}
+              className={`w-2 h-2 rounded-full transition-colors ${index === currentIndex ? 'bg-white' : 'bg-white/50'
+                }`}
             />
           ))}
         </div>
