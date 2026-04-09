@@ -1,6 +1,10 @@
 import { Report, Comment, User } from '../App';
 
-const API_URL = 'http://localhost:5000';
+// Using the computer's local IP for mobile/physical device connectivity
+const API_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
+    ? `http://${window.location.hostname}:5001` 
+    : 'http://192.168.1.24:5001';
+
 const STORAGE_KEYS = {
     REPORTS: 'swachh_nagar_reports',
     USERS: 'swachh_nagar_users',
