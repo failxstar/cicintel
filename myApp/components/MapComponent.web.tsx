@@ -10,7 +10,7 @@ interface MapComponentProps {
   getMarkerColor: (type: string) => string;
 }
 
-export default function MapComponent({ reports, initialRegion, getMarkerColor }: MapComponentProps) {
+export default function MapComponent({ reports, location, initialRegion, getMarkerColor }: MapComponentProps) {
   
   const mapHtml = `
     <!DOCTYPE html>
@@ -23,6 +23,26 @@ export default function MapComponent({ reports, initialRegion, getMarkerColor }:
         body { padding: 0; margin: 0; background: #f9fafb; font-family: system-ui, -apple-system, sans-serif; }
         html, body, #map { height: 100%; width: 100vw; }
         .custom-popup .leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        
+        .user-location-marker {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .user-location-dot {
+          width: 16px;
+          height: 16px;
+          background-color: #3b82f6;
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 0 10px rgba(0,0,0,0.3);
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+          0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+          70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
       </style>
     </head>
     <body>
@@ -56,6 +76,23 @@ export default function MapComponent({ reports, initialRegion, getMarkerColor }:
 
            circle.bindPopup(html, { className: 'custom-popup' });
         });
+
+        var userLocation = ${location ? JSON.stringify(location.coords) : 'null'};
+        if (userLocation) {
+           var userIcon = L.divIcon({
+              className: 'user-location-marker',
+              html: "<div class='user-location-dot'></div>",
+              iconSize: [22, 22],
+              iconAnchor: [11, 11]
+           });
+           
+           var userMarker = L.marker([userLocation.latitude, userLocation.longitude], { 
+              icon: userIcon,
+              zIndexOffset: 1000 
+           }).addTo(map);
+           
+           userMarker.bindPopup("<div style='padding:4px;'><b style='color:#3b82f6; font-size:14px;'>You are here</b></div>", { className: 'custom-popup' });
+        }
       </script>
     </body>
     </html>

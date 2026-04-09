@@ -58,9 +58,7 @@ export interface User {
   isManualLocation?: boolean;
 }
 
-const DEFAULT_API_URL = Platform.OS === 'web' 
-    ? 'http://localhost:5001' 
-    : 'http://10.163.47.135:5001';
+const DEFAULT_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5001' : 'http://localhost:5001';
 
 const STORAGE_KEYS = {
     REPORTS: 'swachh_nagar_reports',
@@ -103,7 +101,15 @@ class DataService {
     async getApiUrl(): Promise<string> {
         try {
             const saved = await AsyncStorage.getItem(STORAGE_KEYS.API_URL);
-            return saved || DEFAULT_API_URL;
+            
+            // If nothing saved, or if saved is one of our "reset" keywords, return default
+            if (!saved || saved === 'undefined' || saved === 'null') {
+                return DEFAULT_API_URL;
+            }
+
+            // Standardize: If it's the old vercel URL, we can force it to default local if desired,
+            // but for now we'll just return what's saved unless it was explicitly cleared.
+            return saved;
         } catch (e) {
             return DEFAULT_API_URL;
         }
@@ -121,6 +127,7 @@ class DataService {
     async loadReportsFromAPI(): Promise<Report[]> {
         try {
             const baseUrl = await this.getApiUrl();
+            console.log(`[dataService] Fetching reports from: ${baseUrl}/api/reports`);
             const response = await fetch(`${baseUrl}/api/reports`);
             if (!response.ok) {
                 return this.getReports();
@@ -141,7 +148,7 @@ class DataService {
             return this.cache;
         } catch (error: any) {
             const baseUrl = await this.getApiUrl();
-            console.error('[dataService] API unreachable at', baseUrl, 'Error:', error.message);
+            console.warn('[dataService] API unreachable at', baseUrl);
             return this.getReports();
         }
     }
@@ -174,8 +181,10 @@ class DataService {
     }
 
     async addReport(report: Report): Promise<void> {
+        const baseUrl = await this.getApiUrl();
+        console.log(`[dataService] Attempting to POST report to: ${baseUrl}/api/reports`);
+        
         try {
-            const baseUrl = await this.getApiUrl();
             const response = await fetch(`${baseUrl}/api/reports`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -183,15 +192,21 @@ class DataService {
             });
 
             if (response.ok) {
+                console.log(`✅ [dataService] Report synced successfully with ${baseUrl}`);
                 await this.loadReportsFromAPI();
             } else {
-                throw new Error('API request failed');
+                throw new Error(`API returned ${response.status}`);
             }
-        } catch (error) {
+        } catch (error: any) {
+            console.warn(`⚠️ [dataService] Sync failed for ${baseUrl}:`, error.message);
+            // Fallback: Save locally
             const reports = await this.getReports();
             reports.push(report);
             await this.saveReports(reports);
             this.notifyListeners(reports);
+            
+            // RE-THROW to let UI know it was a fallback success, not a server success
+            throw error;
         }
     }
 
