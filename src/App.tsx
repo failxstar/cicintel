@@ -69,6 +69,7 @@ export interface User {
   };
   language: Language;
   isOnline: boolean;
+  isManualLocation?: boolean;
 }
 
 export type Screen = 'onboarding' | 'home' | 'report' | 'map' | 'profile' | 'analytics';
@@ -106,7 +107,7 @@ export default function App() {
 
   // Update user coordinates when GPS position changes
   useEffect(() => {
-    if (gpsPosition) {
+    if (gpsPosition && !user.isManualLocation) {
       console.log('[App] GPS position acquired:', {
         lat: gpsPosition.latitude,
         lng: gpsPosition.longitude,
@@ -121,35 +122,11 @@ export default function App() {
         }
       }));
 
-      // Auto-derive district and location from GPS (reverse geocoding)
-      import('./services/geocodingService').then(({ reverseGeocode }) => {
-        reverseGeocode(gpsPosition.latitude, gpsPosition.longitude)
-          .then(result => {
-            console.log('[App] Reverse geocoding result:', result);
-            console.log('[App] 📍 Street name:', result.street || 'No street data');
-            setUser(prev => ({
-              ...prev,
-              district: result.city || result.state || 'Unknown',  // Use city as district
-              location: {
-                city: result.city,
-                state: result.state,
-                country: result.country,
-                formattedAddress: result.formattedAddress,
-                street: result.street  // Store street name
-              }
-            }));
-          })
-          .catch(err => {
-            console.error('[App] Reverse geocoding failed:', err);
-            // Fallback: use coordinates as district identifier
-            setUser(prev => ({
-              ...prev,
-              district: `Location ${gpsPosition.latitude.toFixed(2)}, ${gpsPosition.longitude.toFixed(2)}`
-            }));
-          });
-      });
+      // Provide numerical coordinates update only. 
+      // Do NOT reverse geocode and overwrite the user's selected district/city.
+      // The displayed location should remain locked to what they confirmed during Onboarding.
     }
-  }, [gpsPosition]);
+  }, [gpsPosition, user.isManualLocation]);
 
   // Handle GPS errors
   useEffect(() => {
@@ -388,11 +365,17 @@ export default function App() {
     */
 
   const handleCompleteOnboarding = (selectedDistrict: string, coords: { lat: number; lng: number }, language: Language) => {
+    const isManual = coords.lat === 0 && coords.lng === 0;
     setUser(prev => ({
       ...prev,
       district: selectedDistrict,
+      location: {
+         ...prev.location,
+         city: selectedDistrict
+      },
       coordinates: coords,
-      language
+      language,
+      isManualLocation: isManual
     }));
 
     // Show post-location loading screen

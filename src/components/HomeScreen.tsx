@@ -200,12 +200,7 @@ export function HomeScreen({
             <div>
               <h1 className="text-xl font-bold text-primary">CivicIntel</h1>
               <p className="text-sm text-muted-foreground">
-                {(() => {
-                  // Prefer city over highway numbers (NH83, SH12, etc.)
-                  const street = user.location?.street || '';
-                  const isHighway = /^(NH|SH|MDR|ODR)\d+/i.test(street);
-                  return isHighway ? (user.location?.city || street) : (street || user.location?.city || t.siliguriMunicipalCorporation);
-                })()}
+                {user.location?.city || user.district || t.siliguriMunicipalCorporation}
               </p>
             </div>
             <div className="text-right">
@@ -259,23 +254,26 @@ export function HomeScreen({
               <p className="text-sm text-gray-700 leading-relaxed line-clamp-2">{report.description}</p>
             </div>
 
-            {/* Media Carousel - 5:4 aspect ratio */}
-            <div className="relative w-full px-6">
-              <div className="w-full aspect-[5/4] overflow-hidden rounded-xl">
+            {/* Media - small compact thumbnail inline with info */}
+            <div className="px-4 pb-2 flex gap-3 items-start">
+              <div className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-lg relative border border-gray-100">
                 <MediaCarousel
                   media={report.media || [{
                     id: `${report.id}-main`,
                     type: 'image',
                     url: report.imageUrl
                   }]}
-                  className="w-full h-full"
+                  className="w-full h-full object-cover"
                 />
+                {report.isTamperDetected && (
+                  <div className="absolute top-1 right-1 bg-orange-500 text-white text-[9px] px-1 py-0.5 rounded-full font-medium">
+                    ⚠️
+                  </div>
+                )}
               </div>
-              {report.isTamperDetected && (
-                <div className="absolute top-3 right-9 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                  ⚠️ Verified
-                </div>
-              )}
+              <p className="text-xs text-gray-500 leading-relaxed flex-1">
+                📍 {report.ward} • {report.street}
+              </p>
             </div>
 
             {/* Actions */}

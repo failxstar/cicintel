@@ -120,7 +120,15 @@ export function OnboardingScreen({ onComplete, currentLanguage, onLanguageChange
       }
 
       setLocationError(message);
-      setLocationStep('error');
+      
+      // Only switch to error screen if we were waiting for it
+      // Don't interrupt user if they are entering manually or already succeeded
+      setLocationStep(current => {
+        if (current === 'request' || current === 'detecting') {
+          return 'error';
+        }
+        return current;
+      });
     }
   }, [geoError, t]);
 
@@ -363,6 +371,11 @@ export function OnboardingScreen({ onComplete, currentLanguage, onLanguageChange
               placeholder="e.g., Chennai, Mumbai, Delhi"
               value={manualCity}
               onChange={(e) => setManualCity(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && manualCity.trim()) {
+                  handleManualLocation();
+                }
+              }}
             />
           </label>
 

@@ -87,12 +87,13 @@ export async function reverseGeocode(
 
         // Try to get city name from multiple possible fields
         const city =
-            address.city ||
-            address.town ||
             address.village ||
+            address.suburb ||
+            address.neighbourhood ||
+            address.town ||
+            address.city ||
             address.municipality ||
             address.county ||
-            address.suburb ||
             'Unknown';
 
         const district = address.state_district || address.county;
